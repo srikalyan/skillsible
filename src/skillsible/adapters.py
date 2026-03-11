@@ -6,7 +6,9 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from .errors import AdapterError
 from .planner import InstallOperation
+from .planner import ToolOperation
 from .resolver import resolve_display_source, resolve_install_source
 
 
@@ -83,3 +85,45 @@ class SkillsShAdapter:
             command = self.build_install_command(operation, source=resolved.install_source)
             result = subprocess.run(command, check=False)
             return CommandResult(command=command, returncode=result.returncode)
+
+
+class ToolAdapter:
+    """Adapter that installs or verifies shared tool dependencies."""
+
+    name = "tools"
+
+    def build_install_command(self, operation: ToolOperation) -> list[str]:
+        if operation.uv_tool:
+            return ["uv", "tool", "install", operation.uv_tool]
+        if operation.npm:
+            return ["npm", "install", "-g", operation.npm]
+        if operation.binary:
+            return ["command", "-v", operation.binary]
+        raise AdapterError(
+            f"Tool '{operation.name}' does not define a supported installer or binary check"
+        )
+
+    def apply(self, operation: ToolOperation, dry_run: bool = False) -> CommandResult:
+        command = self.build_install_command(operation)
+        if dry_run:
+            return CommandResult(command=command, returncode=0)
+
+        if operation.uv_tool:
+            result = subprocess.run(command, check=False)
+            return CommandResult(command=command, returncode=result.returncode)
+
+        if operation.npm:
+            if shutil.which("npm") is None:
+                raise AdapterError(
+                    f"Tool '{operation.name}' requires npm, but npm is not available on PATH"
+                )
+            result = subprocess.run(command, check=False)
+            return CommandResult(command=command, returncode=result.returncode)
+
+        if operation.binary:
+            returncode = 0 if shutil.which(operation.binary) is not None else 1
+            return CommandResult(command=command, returncode=returncode)
+
+        raise AdapterError(
+            f"Tool '{operation.name}' does not define a supported installer or binary check"
+        )

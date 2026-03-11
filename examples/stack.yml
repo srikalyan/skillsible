@@ -16,6 +16,8 @@ tools:
   - name: pyright
     kind: lsp
     package: pyright
+    install:
+      npm: pyright
 
   - name: gh
     kind: cli
@@ -23,6 +25,11 @@ tools:
     agents:
       - codex
       - claude-code
+
+  - name: ruff
+    kind: cli
+    install:
+      uv_tool: ruff
 
 mcps:
   - name: github

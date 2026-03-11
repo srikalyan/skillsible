@@ -18,12 +18,19 @@ class SkillSpec:
 
 
 @dataclass(slots=True)
+class ToolInstallSpec:
+    uv_tool: str | None = None
+    npm: str | None = None
+
+
+@dataclass(slots=True)
 class ToolSpec:
     name: str
     kind: str
     agents: list[str] = field(default_factory=list)
     package: str | None = None
     binary: str | None = None
+    install: ToolInstallSpec | None = None
 
 
 @dataclass(slots=True)
@@ -104,6 +111,7 @@ def load_manifest(path: str | Path) -> Manifest:
                 agents=item_agents,
                 package=str(item["package"]) if item.get("package") is not None else None,
                 binary=str(item["binary"]) if item.get("binary") is not None else None,
+                install=_load_tool_install(item.get("install")),
             )
         )
 
@@ -138,4 +146,21 @@ def load_manifest(path: str | Path) -> Manifest:
         skills=skills,
         tools=tools,
         mcps=mcps,
+    )
+
+
+def _load_tool_install(raw: object) -> ToolInstallSpec | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ManifestError("Tool 'install' must be a mapping")
+
+    uv_tool = raw.get("uv_tool")
+    npm = raw.get("npm")
+    if uv_tool is None and npm is None:
+        raise ManifestError("Tool 'install' must define at least one supported installer")
+
+    return ToolInstallSpec(
+        uv_tool=str(uv_tool) if uv_tool is not None else None,
+        npm=str(npm) if npm is not None else None,
     )
