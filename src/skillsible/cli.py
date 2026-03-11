@@ -12,33 +12,43 @@ from .planner import build_plan
 
 def cmd_plan(args: argparse.Namespace) -> int:
     manifest = load_manifest(args.file)
-    operations = build_plan(manifest)
+    plan = build_plan(manifest)
 
-    if not operations:
+    if plan.is_empty():
         print("No operations.")
         return 0
 
     print(f"Plan for {Path(args.file)}")
-    for op in operations:
+    for op in plan.skills:
+        print(f"- {op.describe()}")
+    for op in plan.tools:
+        print(f"- {op.describe()}")
+    for op in plan.mcps:
         print(f"- {op.describe()}")
     return 0
 
 
 def cmd_apply(args: argparse.Namespace) -> int:
     manifest = load_manifest(args.file)
-    operations = build_plan(manifest)
+    plan = build_plan(manifest)
     adapter = SkillsShAdapter()
 
-    if not operations:
+    if plan.is_empty():
         print("No operations.")
         return 0
 
     failures = 0
-    for op in operations:
+    for op in plan.skills:
         result = adapter.apply(op, dry_run=args.dry_run)
         print(f"$ {' '.join(result.command)}")
         if result.returncode != 0:
             failures += 1
+
+    for op in plan.tools:
+        print(f"# not yet applied: {op.describe()}")
+
+    for op in plan.mcps:
+        print(f"# not yet applied: {op.describe()}")
 
     return 1 if failures else 0
 

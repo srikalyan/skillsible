@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from skillsible.manifest import Manifest, SkillSpec
+from skillsible.manifest import Manifest, McpSpec, SkillSpec, ToolSpec
 from skillsible.planner import build_plan
 
 
@@ -17,12 +17,14 @@ def test_build_plan_expands_skill_per_agent():
                 scope="global",
             )
         ],
+        tools=[],
+        mcps=[],
     )
 
     plan = build_plan(manifest)
 
-    assert len(plan) == 2
-    assert [op.agent for op in plan] == ["codex", "claude-code"]
+    assert len(plan.skills) == 2
+    assert [op.agent for op in plan.skills] == ["codex", "claude-code"]
 
 
 def test_operation_describe_includes_scope():
@@ -39,11 +41,44 @@ def test_operation_describe_includes_scope():
                 version="main",
             )
         ],
+        tools=[],
+        mcps=[],
     )
 
-    operation = build_plan(manifest)[0]
+    operation = build_plan(manifest).skills[0]
 
     assert operation.describe() == (
         "install writing-clearly-and-concisely for codex "
         "from obra/the-elements-of-style @ main [project]"
     )
+
+
+def test_build_plan_includes_tools_and_mcps():
+    manifest = Manifest(
+        version=1,
+        agents=["codex", "claude-code"],
+        defaults={},
+        skills=[],
+        tools=[
+            ToolSpec(
+                name="pyright",
+                kind="lsp",
+                agents=["codex", "claude-code"],
+                package="pyright",
+            )
+        ],
+        mcps=[
+            McpSpec(
+                name="github",
+                agents=["claude-code"],
+                transport="stdio",
+                command="github-mcp",
+            )
+        ],
+    )
+
+    plan = build_plan(manifest)
+
+    assert len(plan.tools) == 2
+    assert plan.tools[0].describe() == "tool pyright for codex [lsp] (package=pyright)"
+    assert plan.mcps[0].describe() == "mcp github for claude-code (transport=stdio, command=github-mcp)"

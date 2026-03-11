@@ -4,17 +4,26 @@ Ansible-style skill management for Codex, Claude Code, and agent CLIs.
 
 ## What It Does
 
-`skillsible` manages skills declaratively across machines and agents.
+`skillsible` manages agent setup declaratively across machines and agents.
 
-- define desired skills in a manifest
+- define desired skills, tools, and MCPs in a manifest
 - target multiple agent CLIs
 - preview changes with `plan`
-- apply installs idempotently
+- apply supported installs idempotently
 - make workstation setup reproducible
 
 ## MVP
 
-The initial version focuses on `skills.sh`-style installs driven by a YAML manifest.
+The current version has three manifest layers:
+
+- `skills`
+  Portable `SKILL.md`-style agent skills. This is the most mature layer and the one `apply` supports today.
+- `tools`
+  Shared machine tools such as LSPs or CLIs. These are parsed and shown in `plan`, but not installed yet.
+- `mcps`
+  MCP server definitions. These are parsed and shown in `plan`, but not installed yet.
+
+This split is intentional. Skills are the cleanest cross-agent abstraction. Tools and MCPs vary more by agent and runtime, so `skillsible` tracks them explicitly without pretending parity that does not exist.
 
 ## Example
 
@@ -43,6 +52,21 @@ skills:
     agents:
       - codex   # Override: only install this one for codex
     scope: project # Override: install only for the current project
+
+tools:
+  - name: pyright
+    kind: lsp
+    package: pyright
+    agents:
+      - codex
+      - claude-code
+
+mcps:
+  - name: github
+    transport: stdio
+    command: github-mcp
+    agents:
+      - claude-code
 ```
 
 Top-level `version` and per-skill `version` mean different things:
@@ -66,6 +90,15 @@ Recommended usage:
 - use a branch for moving development targets
 - use a tag for readable pinned versions
 - use a commit SHA for exact replayability
+
+## Current Support
+
+- `skills`
+  Fully supported in `plan` and `apply`
+- `tools`
+  Supported in `plan`; `apply` reports them as not yet applied
+- `mcps`
+  Supported in `plan`; `apply` reports them as not yet applied
 
 ## CLI
 
@@ -157,6 +190,8 @@ See [CONTRIBUTING.md](/home/srikalyan.swayampakula/workspaceGithub/skillsible/CO
 - lockfile support
 - export current installed skills
 - lockfile support for exact resolved commits
+- tool installers and bootstrap support
+- MCP adapter support per agent
 
 ## Development
 
