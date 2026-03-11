@@ -19,24 +19,28 @@ The initial version focuses on `skills.sh`-style installs driven by a YAML manif
 ## Example
 
 ```yaml
-version: 1
+version: 1  # Manifest format version
 
 agents:
-  - codex
-  - claude-code
+  - codex       # Default target agent
+  - claude-code # Also receives any skill that does not override `agents`
 
 defaults:
-  scope: global
+  scope: global # Default scope: install for the current user across projects
 
 skills:
   - source: obra/the-elements-of-style
     skill: writing-clearly-and-concisely
+    # No `agents` field here, so this inherits both top-level agents:
+    #   - codex
+    #   - claude-code
+    # No `scope` field here, so this inherits `defaults.scope = global`
 
   - source: https://github.com/obra/the-elements-of-style
     skill: writing-clearly-and-concisely
     agents:
-      - codex
-    scope: project
+      - codex   # Override: only install this one for codex
+    scope: project # Override: install only for the current project
 ```
 
 ## CLI
