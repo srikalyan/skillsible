@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from .adapters import SkillsShAdapter
-from .errors import ManifestError
+from .errors import AdapterError, ManifestError
 from .manifest import load_manifest
 from .planner import build_plan
 
@@ -86,7 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         return args.func(args)
-    except ManifestError as exc:
+    except (ManifestError, AdapterError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

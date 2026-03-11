@@ -57,6 +57,10 @@ Top-level `version` and per-skill `version` mean different things:
   - a branch like `main`
   - a commit SHA like `8c1f2d4`
 
+When a per-skill `version` is set, `skillsible` resolves that source to a concrete git checkout before
+calling `npx skills add ...`. This keeps `apply` reproducible even though `skills.sh` does not expose its
+own documented `--ref` flag.
+
 Recommended usage:
 
 - use a branch for moving development targets
@@ -152,7 +156,7 @@ See [CONTRIBUTING.md](/home/srikalyan.swayampakula/workspaceGithub/skillsible/CO
 - drift detection
 - lockfile support
 - export current installed skills
-- version pinning by tag or commit
+- lockfile support for exact resolved commits
 
 ## Development
 

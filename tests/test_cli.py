@@ -51,6 +51,29 @@ def test_apply_dry_run_prints_command(capsys, tmp_path: Path):
     assert "npx skills add obra/the-elements-of-style" in out
 
 
+def test_apply_dry_run_prints_versioned_source_hint(capsys, tmp_path: Path):
+    manifest_path = tmp_path / "skills.yml"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "skills:",
+                "  - source: obra/the-elements-of-style",
+                "    skill: writing-clearly-and-concisely",
+                "    version: v1.2.0",
+            ]
+        )
+    )
+
+    rc = main(["apply", "--dry-run", "-f", str(manifest_path)])
+    out = capsys.readouterr().out
+
+    assert rc == 0
+    assert "npx skills add obra/the-elements-of-style @ v1.2.0" in out
+
+
 def test_invalid_manifest_exits_with_error(capsys, tmp_path: Path):
     manifest_path = tmp_path / "skills.yml"
     manifest_path.write_text("version: 2\nagents:\n  - codex\nskills: []\n")
