@@ -31,6 +31,7 @@ defaults:
 skills:
   - source: obra/the-elements-of-style
     skill: writing-clearly-and-concisely
+    version: v1.2.0 # Pin this skill to a specific source revision, such as a tag
     # No `agents` field here, so this inherits both top-level agents:
     #   - codex
     #   - claude-code
@@ -38,10 +39,29 @@ skills:
 
   - source: https://github.com/obra/the-elements-of-style
     skill: writing-clearly-and-concisely
+    version: main # A skill version can also be a branch, tag, or commit SHA
     agents:
       - codex   # Override: only install this one for codex
     scope: project # Override: install only for the current project
 ```
+
+Top-level `version` and per-skill `version` mean different things:
+
+- top-level `version`
+  The manifest schema version. This tells `skillsible` how to interpret the playbook itself.
+
+- per-skill `version`
+  The source revision to install for that skill. This is used for reproducibility and can be:
+  - a semantic tag like `v1.2.0`
+  - a git tag like `release-2026-03`
+  - a branch like `main`
+  - a commit SHA like `8c1f2d4`
+
+Recommended usage:
+
+- use a branch for moving development targets
+- use a tag for readable pinned versions
+- use a commit SHA for exact replayability
 
 ## CLI
 
