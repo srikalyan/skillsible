@@ -49,6 +49,20 @@ uv run skillsible doctor
 
 ## Install
 
+From PyPI:
+
+```bash
+uv tool install skillsible
+skillsible doctor
+```
+
+For a specific version:
+
+```bash
+uv tool install skillsible==0.1.0
+skillsible doctor
+```
+
 From a checkout:
 
 ```bash
