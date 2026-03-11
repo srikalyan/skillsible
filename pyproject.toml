@@ -4,9 +4,31 @@ version = "0.1.0"
 description = "Ansible-style skill management for agent CLIs"
 readme = "README.md"
 requires-python = ">=3.11"
+authors = [
+    { name = "Srikalyan Swayampakula" },
+]
+keywords = ["agents", "automation", "cli", "developer-tools", "skills"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Installation/Setup",
+]
 dependencies = [
     "pyyaml>=6.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/srikalyan/skillsible"
+Repository = "https://github.com/srikalyan/skillsible"
+Issues = "https://github.com/srikalyan/skillsible/issues"
 
 [project.scripts]
 skillsible = "skillsible.cli:main"

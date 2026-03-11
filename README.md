@@ -64,6 +64,26 @@ uv tool install dist/skillsible-0.1.0-py3-none-any.whl
 skillsible doctor
 ```
 
+## CI And Release
+
+This repo includes GitHub Actions for:
+
+- CI on pushes to `main` and pull requests
+- building distributions with `uv build`
+- publishing to PyPI when a tag like `v0.1.0` is pushed
+
+### PyPI Trusted Publishing Setup
+
+Before publishing will work, configure `skillsible` on PyPI to trust this repository's publish workflow:
+
+- PyPI project: `skillsible`
+- GitHub owner: `srikalyan`
+- GitHub repository: `skillsible`
+- Workflow file: `.github/workflows/publish.yml`
+- Environment name: `pypi`
+
+After that, pushing a tag such as `v0.1.0` will trigger the publish workflow.
+
 ## Design Goals
 
 - declarative desired state
