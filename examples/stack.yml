@@ -30,3 +30,9 @@ mcps:
     command: github-mcp
     agents:
       - claude-code
+
+  - name: linear
+    transport: http
+    url: http://localhost:8765/mcp
+    agents:
+      - claude-code

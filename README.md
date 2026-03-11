@@ -25,7 +25,7 @@ The current version has three manifest layers:
 
 This split is intentional. Skills are the cleanest cross-agent abstraction. Tools and MCPs vary more by agent and runtime, so `skillsible` tracks them explicitly without pretending parity that does not exist.
 
-## Example
+## Complete Schema Example
 
 ```yaml
 version: 1  # Manifest format version
@@ -39,8 +39,8 @@ defaults:
 
 skills:
   - source: obra/the-elements-of-style
-    skill: writing-clearly-and-concisely
-    version: v1.2.0 # Pin this skill to a specific source revision, such as a tag
+    skill: writing-clearly-and-concisely # Required: skill directory name
+    version: v1.2.0 # Optional: branch, tag, or commit SHA
     # No `agents` field here, so this inherits both top-level agents:
     #   - codex
     #   - claude-code
@@ -48,26 +48,36 @@ skills:
 
   - source: https://github.com/obra/the-elements-of-style
     skill: writing-clearly-and-concisely
-    version: main # A skill version can also be a branch, tag, or commit SHA
+    version: main # A skill version can be a branch, tag, or commit SHA
     agents:
-      - codex   # Override: only install this one for codex
-    scope: project # Override: install only for the current project
+      - codex # Optional override: target only codex
+    scope: project # Optional override: install only for the current project
 
 tools:
   - name: pyright
-    kind: lsp
-    package: pyright
+    kind: lsp # Required: free-form category like lsp or cli
+    package: pyright # Optional: descriptive package name
     agents:
       - codex
       - claude-code
 
+  - name: gh
+    kind: cli
+    binary: gh # Optional: expected binary name on PATH
+
 mcps:
   - name: github
-    transport: stdio
-    command: github-mcp
+    transport: stdio # Optional: transport hint such as stdio or http
+    command: github-mcp # Optional: command to run for stdio-based MCPs
     agents:
       - claude-code
+
+  - name: linear
+    transport: http
+    url: http://localhost:8765/mcp # Optional: server URL for HTTP MCPs
 ```
+
+## Schema Reference
 
 Top-level `version` and per-skill `version` mean different things:
 
@@ -90,6 +100,64 @@ Recommended usage:
 - use a branch for moving development targets
 - use a tag for readable pinned versions
 - use a commit SHA for exact replayability
+
+### Top-level fields
+
+- `version`
+  Required. Manifest schema version. Current value: `1`.
+- `agents`
+  Required. Default target agents used by `skills`, `tools`, and `mcps` when an item does not define its own `agents`.
+- `defaults`
+  Optional. Currently only `defaults.scope` is supported.
+
+### `skills`
+
+Each `skills` entry supports:
+
+- `source`
+  Required. Repo shorthand, GitHub URL, git URL, or local path containing the skill.
+- `skill`
+  Required. Skill directory name to install from that source.
+- `agents`
+  Optional. Overrides top-level `agents` for this skill only.
+- `scope`
+  Optional. `global` or `project`. Defaults to `defaults.scope` or `global`.
+- `version`
+  Optional. Branch, tag, or commit SHA. When set, `apply` resolves the source to that exact revision before installation.
+
+### `tools`
+
+Each `tools` entry supports:
+
+- `name`
+  Required. Human-readable tool name.
+- `kind`
+  Required. Free-form category such as `lsp` or `cli`.
+- `agents`
+  Optional. Overrides top-level `agents` for this tool only.
+- `package`
+  Optional. Descriptive package name.
+- `binary`
+  Optional. Expected binary name on `PATH`.
+
+`tools` are currently planning metadata only. They are parsed and shown in `plan`, but `apply` does not install them yet.
+
+### `mcps`
+
+Each `mcps` entry supports:
+
+- `name`
+  Required. MCP server name.
+- `agents`
+  Optional. Overrides top-level `agents` for this MCP only.
+- `transport`
+  Optional. Transport hint such as `stdio` or `http`.
+- `command`
+  Optional. Command used to launch the MCP server.
+- `url`
+  Optional. URL for an already-running MCP server.
+
+`mcps` are currently planning metadata only. They are parsed and shown in `plan`, but `apply` does not configure or install them yet.
 
 ## Current Support
 
