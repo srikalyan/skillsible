@@ -28,6 +28,8 @@ class ToolOperation:
     kind: str
     package: str | None = None
     binary: str | None = None
+    uv_tool: str | None = None
+    npm: str | None = None
 
     def describe(self) -> str:
         details: list[str] = []
@@ -35,6 +37,10 @@ class ToolOperation:
             details.append(f"package={self.package}")
         if self.binary:
             details.append(f"binary={self.binary}")
+        if self.uv_tool:
+            details.append(f"uv_tool={self.uv_tool}")
+        if self.npm:
+            details.append(f"npm={self.npm}")
         suffix = f" ({', '.join(details)})" if details else ""
         return f"tool {self.name} for {self.agent} [{self.kind}]{suffix}"
 
@@ -93,6 +99,8 @@ def build_plan(manifest: Manifest) -> Plan:
                     kind=spec.kind,
                     package=spec.package,
                     binary=spec.binary,
+                    uv_tool=spec.install.uv_tool if spec.install else None,
+                    npm=spec.install.npm if spec.install else None,
                 )
             )
 

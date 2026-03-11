@@ -19,7 +19,7 @@ The current version has three manifest layers:
 - `skills`
   Portable `SKILL.md`-style agent skills. This is the most mature layer and the one `apply` supports today.
 - `tools`
-  Shared machine tools such as LSPs or CLIs. These are parsed and shown in `plan`, but not installed yet.
+  Shared machine tools such as LSPs or CLIs. These are parsed and shown in `plan`, and selected installers are supported in `apply`.
 - `mcps`
   MCP server definitions. These are parsed and shown in `plan`, but not installed yet.
 
@@ -57,6 +57,8 @@ tools:
   - name: pyright
     kind: lsp # Required: free-form category like lsp or cli
     package: pyright # Optional: descriptive package name
+    install:
+      npm: pyright # Optional: install via npm install -g
     agents:
       - codex
       - claude-code
@@ -64,6 +66,11 @@ tools:
   - name: gh
     kind: cli
     binary: gh # Optional: expected binary name on PATH
+
+  - name: ruff
+    kind: cli
+    install:
+      uv_tool: ruff # Optional: install via uv tool install
 
 mcps:
   - name: github
@@ -139,8 +146,19 @@ Each `tools` entry supports:
   Optional. Descriptive package name.
 - `binary`
   Optional. Expected binary name on `PATH`.
+- `install`
+  Optional. Explicit installer backend. Supported forms today:
+  - `uv_tool: <package>`
+  - `npm: <package>`
 
-`tools` are currently planning metadata only. They are parsed and shown in `plan`, but `apply` does not install them yet.
+Tool behavior in `apply`:
+
+- `install.uv_tool`
+  Runs `uv tool install <package>`
+- `install.npm`
+  Runs `npm install -g <package>`
+- `binary` without `install`
+  Verifies the binary is present on `PATH`
 
 ### `mcps`
 
@@ -164,7 +182,7 @@ Each `mcps` entry supports:
 - `skills`
   Fully supported in `plan` and `apply`
 - `tools`
-  Supported in `plan`; `apply` reports them as not yet applied
+  Supported in `plan` and `apply` for `uv_tool`, `npm`, and binary verification
 - `mcps`
   Supported in `plan`; `apply` reports them as not yet applied
 

@@ -97,6 +97,8 @@ def test_plan_prints_tools_and_mcps(capsys, tmp_path: Path):
                 "  - name: pyright",
                 "    kind: lsp",
                 "    package: pyright",
+                "    install:",
+                "      npm: pyright",
                 "mcps:",
                 "  - name: github",
                 "    transport: stdio",
@@ -109,8 +111,41 @@ def test_plan_prints_tools_and_mcps(capsys, tmp_path: Path):
     out = capsys.readouterr().out
 
     assert rc == 0
-    assert "tool pyright for codex [lsp] (package=pyright)" in out
+    assert "tool pyright for codex [lsp] (package=pyright, npm=pyright)" in out
     assert "mcp github for codex (transport=stdio, command=github-mcp)" in out
+
+
+def test_apply_dry_run_prints_tool_install_commands(capsys, tmp_path: Path):
+    manifest_path = tmp_path / "skills.yml"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "tools:",
+                "  - name: ruff",
+                "    kind: cli",
+                "    install:",
+                "      uv_tool: ruff",
+                "  - name: pyright",
+                "    kind: lsp",
+                "    install:",
+                "      npm: pyright",
+                "  - name: gh",
+                "    kind: cli",
+                "    binary: gh",
+            ]
+        )
+    )
+
+    rc = main(["apply", "--dry-run", "-f", str(manifest_path)])
+    out = capsys.readouterr().out
+
+    assert rc == 0
+    assert "$ uv tool install ruff" in out
+    assert "$ npm install -g pyright" in out
+    assert "$ command -v gh" in out
 
 
 def test_doctor_shows_nvm_hint_when_npx_missing(monkeypatch, capsys):
