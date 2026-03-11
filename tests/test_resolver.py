@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from skillsible.adapters import SkillsShAdapter
 from skillsible.errors import AdapterError
 from skillsible.planner import InstallOperation
 from skillsible.resolver import resolve_display_source, resolve_install_source
@@ -59,6 +60,21 @@ def test_resolve_install_source_checks_out_local_repo_at_requested_version(tmp_p
 
     with resolve_install_source(operation) as resolved:
         assert Path(resolved.install_source, "SKILL.md").read_text() == "version one\n"
+
+
+def test_doctor_scans_nvm_paths_without_crashing(monkeypatch, tmp_path: Path):
+    nvm_dir = tmp_path / ".nvm"
+    npx_path = nvm_dir / "versions/node/v20.0.0/bin/npx"
+    npx_path.parent.mkdir(parents=True)
+    npx_path.write_text("")
+
+    monkeypatch.setenv("NVM_DIR", str(nvm_dir))
+    monkeypatch.setattr("skillsible.adapters.shutil.which", lambda _name: None)
+
+    doctor = SkillsShAdapter().doctor()
+
+    assert doctor.npx_found is False
+    assert str(npx_path) in (doctor.nvm_candidates or [])
 
 
 def subprocess_run(command: list[str]) -> None:
