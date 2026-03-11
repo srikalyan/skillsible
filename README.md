@@ -187,6 +187,28 @@ Each `mcps` entry supports:
 - `mcps`
   Supported in `plan`; `apply` reports them as not yet applied
 
+## Example Patterns
+
+Some repos can participate in more than one layer.
+
+For example, `googleworkspace/cli` can already be used directly as a `skills` source:
+
+```yaml
+version: 1
+
+agents:
+  - codex
+  - claude-code
+
+skills:
+  - source: googleworkspace/cli
+    skill: gws-drive
+```
+
+That is the minimal setup.
+
+If you also want the CLI binary installed and an MCP endpoint tracked, use the fuller layered version shown in [google-workspace.yml](/home/srikalyan.swayampakula/workspaceGithub/skillsible/examples/google-workspace.yml).
+
 ## CLI
 
 ```bash
