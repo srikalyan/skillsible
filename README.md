@@ -98,6 +98,21 @@ Before publishing will work, configure `skillsible` on PyPI to trust this reposi
 
 After that, pushing a tag such as `v0.1.0` will trigger the publish workflow.
 
+## Workflow
+
+The default branch is `main` and it is protected.
+
+Expected flow:
+
+1. Create a feature branch.
+2. Open a pull request to `main`.
+3. Let CI pass and get approval.
+4. Merge to `main`.
+5. Tag the merge commit with `vX.Y.Z`.
+6. Push the tag to publish to PyPI.
+
+See [CONTRIBUTING.md](/home/srikalyan.swayampakula/workspaceGithub/skillsible/CONTRIBUTING.md) for the release workflow in more detail.
+
 ## Design Goals
 
 - declarative desired state
