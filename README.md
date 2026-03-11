@@ -46,7 +46,7 @@ skills:
     #   - claude-code
     # No `scope` field here, so this inherits `defaults.scope = global`
 
-  - source: https://github.com/obra/the-elements-of-style
+  - source: obra/the-elements-of-style
     skill: writing-clearly-and-concisely
     version: main # A skill version can be a branch, tag, or commit SHA
     agents:
@@ -122,7 +122,8 @@ Recommended usage:
 Each `skills` entry supports:
 
 - `source`
-  Required. Repo shorthand, GitHub URL, git URL, or local path containing the skill.
+  Required. GitHub shorthand, GitHub URL, git URL, or local path containing the skill.
+  Preferred GitHub form: `owner/repo` instead of `https://github.com/owner/repo`.
 - `skill`
   Required. Skill directory name to install from that source.
 - `agents`

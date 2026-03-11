@@ -1,0 +1,33 @@
+version: 1
+
+agents:
+  - codex
+  - claude-code
+
+defaults:
+  scope: global
+
+skills:
+  - source: googleworkspace/cli
+    skill: gws-drive
+    agents:
+      - codex
+      - claude-code
+
+tools:
+  - name: gws
+    kind: cli
+    package: "@googleworkspace/cli"
+    binary: gws
+    install:
+      npm: "@googleworkspace/cli"
+    agents:
+      - codex
+      - claude-code
+
+mcps:
+  - name: workspace-developer
+    transport: http
+    url: https://workspace-developer.goog/mcp
+    agents:
+      - claude-code
