@@ -85,6 +85,34 @@ def test_invalid_manifest_exits_with_error(capsys, tmp_path: Path):
     assert "Unsupported manifest version" in err
 
 
+def test_plan_prints_tools_and_mcps(capsys, tmp_path: Path):
+    manifest_path = tmp_path / "skills.yml"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "tools:",
+                "  - name: pyright",
+                "    kind: lsp",
+                "    package: pyright",
+                "mcps:",
+                "  - name: github",
+                "    transport: stdio",
+                "    command: github-mcp",
+            ]
+        )
+    )
+
+    rc = main(["plan", "-f", str(manifest_path)])
+    out = capsys.readouterr().out
+
+    assert rc == 0
+    assert "tool pyright for codex [lsp] (package=pyright)" in out
+    assert "mcp github for codex (transport=stdio, command=github-mcp)" in out
+
+
 def test_doctor_shows_nvm_hint_when_npx_missing(monkeypatch, capsys):
     def _fake_doctor(self):
         return DoctorResult(

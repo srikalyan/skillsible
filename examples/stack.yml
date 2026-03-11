@@ -1,0 +1,32 @@
+version: 1
+
+agents:
+  - codex
+  - claude-code
+
+defaults:
+  scope: global
+
+skills:
+  - source: obra/the-elements-of-style
+    skill: writing-clearly-and-concisely
+    version: v1.2.0
+
+tools:
+  - name: pyright
+    kind: lsp
+    package: pyright
+
+  - name: gh
+    kind: cli
+    binary: gh
+    agents:
+      - codex
+      - claude-code
+
+mcps:
+  - name: github
+    transport: stdio
+    command: github-mcp
+    agents:
+      - claude-code
