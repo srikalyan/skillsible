@@ -4,9 +4,9 @@ import os
 import shutil
 import subprocess
 from dataclasses import dataclass
-from pathlib import Path
 
 from .planner import InstallOperation
+from .resolver import resolve_display_source, resolve_install_source
 
 
 @dataclass(slots=True)
@@ -57,12 +57,12 @@ class SkillsShAdapter:
 
         return candidates
 
-    def build_install_command(self, operation: InstallOperation) -> list[str]:
+    def build_install_command(self, operation: InstallOperation, source: str | None = None) -> list[str]:
         command = [
             "npx",
             "skills",
             "add",
-            operation.source,
+            source or operation.source,
             "--skill",
             operation.skill,
             "--agent",
@@ -73,8 +73,12 @@ class SkillsShAdapter:
         return command
 
     def apply(self, operation: InstallOperation, dry_run: bool = False) -> CommandResult:
-        command = self.build_install_command(operation)
         if dry_run:
+            display_source = resolve_display_source(operation)
+            command = self.build_install_command(operation, source=display_source)
             return CommandResult(command=command, returncode=0)
-        result = subprocess.run(command, check=False)
-        return CommandResult(command=command, returncode=result.returncode)
+
+        with resolve_install_source(operation) as resolved:
+            command = self.build_install_command(operation, source=resolved.install_source)
+            result = subprocess.run(command, check=False)
+            return CommandResult(command=command, returncode=result.returncode)

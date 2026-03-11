@@ -23,7 +23,7 @@ To merge into `main`, GitHub currently requires:
 
 Direct pushes to `main` are blocked by branch protection.
 
-As the repository owner, you can comment `looks good to me` on a PR to enable auto-merge.
+As the repository owner, you can comment `LGTM` or `looks good to me` on a PR to enable auto-merge.
 If checks are already green, it will merge immediately. Otherwise it will merge as soon as required checks pass.
 
 ## Release Process
@@ -33,7 +33,7 @@ Releases are tag-driven.
 1. Make code changes on a branch.
 2. Update the package version in `pyproject.toml`.
 3. Open a pull request to `main`.
-4. Wait for CI to pass and the PR to be approved.
+4. Wait for CI to pass.
 5. Merge the PR.
 6. Create and push a version tag from `main`.
 
