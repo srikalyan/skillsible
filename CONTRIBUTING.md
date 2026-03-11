@@ -17,12 +17,14 @@ git checkout -b feat/add-export-command
 To merge into `main`, GitHub currently requires:
 
 - a pull request
-- 1 approving review
 - all CI checks passing
 - resolved review conversations
 - linear history
 
 Direct pushes to `main` are blocked by branch protection.
+
+As the repository owner, you can comment `looks good to me` on a PR to enable auto-merge.
+If checks are already green, it will merge immediately. Otherwise it will merge as soon as required checks pass.
 
 ## Release Process
 

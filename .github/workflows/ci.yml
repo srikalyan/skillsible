@@ -7,12 +7,38 @@ on:
   pull_request:
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      primary_python: ${{ steps.versions.outputs.primary_python }}
+      test_matrix: ${{ steps.versions.outputs.test_matrix }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Read Python versions
+        id: versions
+        run: |
+          primary_python="$(tr -d '[:space:]' < .python-version)"
+          echo "primary_python=$primary_python" >> "$GITHUB_OUTPUT"
+          PRIMARY_PYTHON="$primary_python" python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+
+          versions = []
+          for version in (os.environ["PRIMARY_PYTHON"], "3.12", "3.13"):
+              if version not in versions:
+                  versions.append(version)
+
+          print(f"test_matrix={json.dumps({'python-version': versions})}")
+          PY
+
   test:
+    needs: prepare
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+      matrix: ${{ fromJSON(needs.prepare.outputs.test_matrix) }}
 
     steps:
       - name: Check out repository
@@ -34,6 +60,7 @@ jobs:
         run: uv run --python ${{ matrix.python-version }} python -m skillsible doctor
 
   build:
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -43,7 +70,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Set up Python
-        run: uv python install 3.11
+        run: uv python install ${{ needs.prepare.outputs.primary_python }}
 
       - name: Build package
         run: uv build

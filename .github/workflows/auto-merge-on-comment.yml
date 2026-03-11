@@ -1,0 +1,23 @@
+name: Auto Merge On Comment
+
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  enable-auto-merge:
+    if: >
+      github.event.issue.pull_request &&
+      github.actor == github.repository_owner &&
+      contains(github.event.comment.body, 'looks good to me')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Enable auto-merge for the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.issue.html_url }}
+        run: gh pr merge --auto --squash "$PR_URL"

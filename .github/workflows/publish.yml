@@ -7,7 +7,22 @@ on:
   workflow_dispatch:
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      primary_python: ${{ steps.version.outputs.primary_python }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Read primary Python version
+        id: version
+        run: |
+          primary_python="$(tr -d '[:space:]' < .python-version)"
+          echo "primary_python=$primary_python" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -17,7 +32,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Set up Python
-        run: uv python install 3.11
+        run: uv python install ${{ needs.prepare.outputs.primary_python }}
 
       - name: Build package
         run: uv build
