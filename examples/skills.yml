@@ -10,9 +10,11 @@ defaults:
 skills:
   - source: obra/the-elements-of-style
     skill: writing-clearly-and-concisely
+    version: v1.2.0
 
   - source: https://github.com/obra/the-elements-of-style
     skill: writing-clearly-and-concisely
+    version: main
     agents:
       - codex
     scope: project
