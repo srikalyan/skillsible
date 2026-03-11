@@ -1,3 +1,15 @@
+# Minimal skills-only example:
+#
+# version: 1
+# agents:
+#   - codex
+#   - claude-code
+# skills:
+#   - source: googleworkspace/cli
+#     skill: gws-drive
+#
+# Full layered example below:
+
 version: 1
 
 agents:
