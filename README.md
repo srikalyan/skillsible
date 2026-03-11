@@ -106,7 +106,7 @@ Expected flow:
 
 1. Create a feature branch.
 2. Open a pull request to `main`.
-3. Let CI pass and get approval.
+3. Let CI pass.
 4. Merge to `main`.
 5. Tag the merge commit with `vX.Y.Z`.
 6. Push the tag to publish to PyPI.
