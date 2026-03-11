@@ -229,7 +229,7 @@ skillsible doctor
 For a specific version:
 
 ```bash
-uv tool install skillsible==1.0.0
+uv tool install skillsible==1.1.0
 skillsible doctor
 ```
 
@@ -244,7 +244,7 @@ From a built wheel:
 
 ```bash
 uv build
-uv tool install dist/skillsible-1.0.0-py3-none-any.whl
+uv tool install dist/skillsible-1.1.0-py3-none-any.whl
 skillsible doctor
 ```
 
@@ -254,7 +254,7 @@ This repo includes GitHub Actions for:
 
 - CI on pushes to `main` and pull requests
 - building distributions with `uv build`
-- publishing to PyPI when a tag like `v1.0.0` is pushed
+- publishing to PyPI when a tag like `v1.1.0` is pushed
 
 ### PyPI Trusted Publishing Setup
 
@@ -266,7 +266,7 @@ Before publishing will work, configure `skillsible` on PyPI to trust this reposi
 - Workflow file: `.github/workflows/publish.yml`
 - Environment name: `pypi`
 
-After that, pushing a tag such as `v1.0.0` will trigger the publish workflow.
+After that, pushing a tag such as `v1.1.0` will trigger the publish workflow.
 
 ## Workflow
 
