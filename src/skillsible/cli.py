@@ -48,7 +48,13 @@ def cmd_doctor(_args: argparse.Namespace) -> int:
     doctor = adapter.doctor()
     print("Doctor")
     print(f"- python: {sys.executable}")
-    print(f"- npx: {'found' if doctor['npx'] else 'missing'}")
+    print(f"- npx: {'found' if doctor.npx_found else 'missing'}")
+    if doctor.npx_path:
+        print(f"- npx path: {doctor.npx_path}")
+    elif doctor.nvm_candidates:
+        print("- npx hint: found under nvm, but not on current PATH")
+        print(f"- nvm candidate: {doctor.nvm_candidates[0]}")
+        print("- suggestion: ensure your shell initializes nvm before running skillsible")
     print("- expected external installer: `npx skills`")
     return 0
 
