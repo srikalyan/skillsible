@@ -1,0 +1,18 @@
+version: 1
+
+agents:
+  - codex
+  - claude-code
+
+defaults:
+  scope: global
+
+skills:
+  - source: obra/the-elements-of-style
+    skill: writing-clearly-and-concisely
+
+  - source: https://github.com/obra/the-elements-of-style
+    skill: writing-clearly-and-concisely
+    agents:
+      - codex
+    scope: project
