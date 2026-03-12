@@ -215,7 +215,25 @@ If you also want the CLI binary installed and an MCP endpoint tracked, use the f
 uv run skillsible plan -f skills.yml
 uv run skillsible apply -f skills.yml
 uv run skillsible doctor
+uv run skillsible inspect
 ```
+
+`inspect` is the current post-install verification command for supported agents. It queries real
+local CLIs instead of guessing from manifest state:
+
+- `npx skills ls ...` for Codex and Claude skill discovery
+- `codex mcp list` for Codex MCP discovery
+- `claude plugins list` and `claude mcp list` for Claude discovery
+
+This is stronger than a dry-run or command log because it asks the agent surfaces what they
+currently see after installation. It still has a support boundary:
+
+- `skills`
+  Verified through `skills.sh` discovery
+- `tools`
+  Verified separately through their installed binaries
+- `mcps`
+  Only inspectable once a future `apply` implementation configures them
 
 ## Install
 
