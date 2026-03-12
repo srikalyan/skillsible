@@ -309,3 +309,14 @@ uv sync --dev
 uv run pytest
 uv run skillsible plan -f examples/skills.yml
 ```
+
+## Docker Integration
+
+Run the containerized integration test locally with:
+
+```bash
+docker build -t skillsible-integration -f tests/integration/docker/Dockerfile .
+docker run --rm skillsible-integration
+```
+
+This path builds the wheel inside Docker, installs `skillsible` as a real tool, and exercises `doctor`, `plan`, and `apply` against a fixture manifest.

@@ -1,0 +1,27 @@
+version: 1
+
+agents:
+  - codex
+
+defaults:
+  scope: global
+
+skills:
+  - source: /workspace/tests/integration/fixtures/demo-skills
+    skill: writing-clearly-and-concisely
+
+tools:
+  - name: pyright
+    kind: lsp
+    package: pyright
+    install:
+      npm: pyright
+
+  - name: gh
+    kind: cli
+    binary: gh
+
+mcps:
+  - name: github
+    transport: stdio
+    command: github-mcp
