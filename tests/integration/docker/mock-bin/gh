@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+set -eu
+
+printf 'gh %s\n' "$*" >> /tmp/skillsible-tool-calls.log
