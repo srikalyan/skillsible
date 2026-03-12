@@ -182,3 +182,64 @@ def test_doctor_shows_npx_path_when_found(monkeypatch, capsys):
     assert rc == 0
     assert "- npx: found" in out
     assert "- npx path: /home/test/.nvm/versions/node/v24.0.2/bin/npx" in out
+
+
+def test_inspect_defaults_to_codex_and_claude(monkeypatch, capsys):
+    calls: list[str] = []
+
+    class _FakeInspector:
+        def inspect(self, agent: str):
+            calls.append(agent)
+            return []
+
+    monkeypatch.setattr("skillsible.cli.AgentInspector", _FakeInspector)
+
+    rc = main(["inspect"])
+    out = capsys.readouterr().out
+
+    assert rc == 0
+    assert calls == ["codex", "claude-code"]
+    assert "[codex]" in out
+    assert "[claude-code]" in out
+
+
+def test_inspect_prints_command_output_and_failure(monkeypatch, capsys):
+    class _FakeResult:
+        def __init__(
+            self,
+            command: list[str],
+            returncode: int,
+            stdout: str = "",
+            stderr: str = "",
+            unavailable_reason: str | None = None,
+        ):
+            self.command = command
+            self.returncode = returncode
+            self.stdout = stdout
+            self.stderr = stderr
+            self.unavailable_reason = unavailable_reason
+
+    class _FakeInspector:
+        def inspect(self, _agent: str):
+            return [
+                _FakeResult(
+                    command=["npx", "skills", "ls", "-a", "codex"],
+                    returncode=0,
+                    stdout="demo-skill",
+                ),
+                _FakeResult(
+                    command=["codex", "mcp", "list"],
+                    returncode=127,
+                    unavailable_reason="codex is not available on PATH",
+                ),
+            ]
+
+    monkeypatch.setattr("skillsible.cli.AgentInspector", _FakeInspector)
+
+    rc = main(["inspect", "--agent", "codex"])
+    captured = capsys.readouterr()
+
+    assert rc == 1
+    assert "$ npx skills ls -a codex" in captured.out
+    assert "demo-skill" in captured.out
+    assert "codex is not available on PATH" in captured.out

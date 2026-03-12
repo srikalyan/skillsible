@@ -4,7 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from .adapters import SkillsShAdapter, ToolAdapter
+from .adapters import AgentInspector, SkillsShAdapter, ToolAdapter
 from .errors import AdapterError, ManifestError
 from .manifest import load_manifest
 from .planner import build_plan
@@ -73,6 +73,29 @@ def cmd_doctor(_args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_inspect(args: argparse.Namespace) -> int:
+    inspector = AgentInspector()
+    failures = 0
+
+    print("Inspect")
+    for agent in args.agent:
+        print(f"[{agent}]")
+        for result in inspector.inspect(agent):
+            print(f"$ {' '.join(result.command)}")
+            if result.unavailable_reason:
+                failures += 1
+                print(f"! unavailable: {result.unavailable_reason}")
+                continue
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print(result.stderr, file=sys.stderr)
+            if result.returncode != 0:
+                failures += 1
+                print(f"! command exited with status {result.returncode}")
+    return 1 if failures else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="skillsible",
@@ -92,12 +115,26 @@ def build_parser() -> argparse.ArgumentParser:
     doctor_parser = subparsers.add_parser("doctor", help="Check prerequisites")
     doctor_parser.set_defaults(func=cmd_doctor)
 
+    inspect_parser = subparsers.add_parser(
+        "inspect",
+        help="Inspect what Codex and Claude currently discover",
+    )
+    inspect_parser.add_argument(
+        "--agent",
+        action="append",
+        choices=["codex", "claude-code"],
+        help="Agent to inspect (default: inspect both codex and claude-code)",
+    )
+    inspect_parser.set_defaults(func=cmd_inspect)
+
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.command == "inspect" and not args.agent:
+        args.agent = ["codex", "claude-code"]
     try:
         return args.func(args)
     except (ManifestError, AdapterError) as exc:

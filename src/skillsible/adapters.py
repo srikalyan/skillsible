@@ -19,6 +19,16 @@ class CommandResult:
 
 
 @dataclass(slots=True)
+class InspectionResult:
+    title: str
+    command: list[str]
+    returncode: int
+    stdout: str = ""
+    stderr: str = ""
+    unavailable_reason: str | None = None
+
+
+@dataclass(slots=True)
 class DoctorResult:
     npx_found: bool
     npx_path: str | None = None
@@ -126,4 +136,49 @@ class ToolAdapter:
 
         raise AdapterError(
             f"Tool '{operation.name}' does not define a supported installer or binary check"
+        )
+
+
+class AgentInspector:
+    """Inspect what supported agent CLIs currently discover."""
+
+    def inspect(self, agent: str) -> list[InspectionResult]:
+        if agent == "codex":
+            return self._inspect_codex()
+        if agent == "claude-code":
+            return self._inspect_claude()
+        raise AdapterError(f"Unsupported inspect target '{agent}'")
+
+    def _inspect_codex(self) -> list[InspectionResult]:
+        return [
+            self._run(["npx", "skills", "ls", "-a", "codex"], title="Project skills"),
+            self._run(["npx", "skills", "ls", "-g", "-a", "codex"], title="Global skills"),
+            self._run(["codex", "mcp", "list"], title="MCPs"),
+        ]
+
+    def _inspect_claude(self) -> list[InspectionResult]:
+        return [
+            self._run(["npx", "skills", "ls", "-a", "claude-code"], title="Project skills"),
+            self._run(["npx", "skills", "ls", "-g", "-a", "claude-code"], title="Global skills"),
+            self._run(["claude", "plugins", "list"], title="Plugins"),
+            self._run(["claude", "mcp", "list"], title="MCPs"),
+        ]
+
+    def _run(self, command: list[str], title: str) -> InspectionResult:
+        binary = command[0]
+        if shutil.which(binary) is None:
+            return InspectionResult(
+                title=title,
+                command=command,
+                returncode=127,
+                unavailable_reason=f"{binary} is not available on PATH",
+            )
+
+        completed = subprocess.run(command, capture_output=True, text=True, check=False)
+        return InspectionResult(
+            title=title,
+            command=command,
+            returncode=completed.returncode,
+            stdout=completed.stdout.strip(),
+            stderr=completed.stderr.strip(),
         )
