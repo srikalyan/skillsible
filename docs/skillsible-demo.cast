@@ -1,0 +1,11 @@
+{"version": 2, "width": 80, "height": 24, "timestamp": 1773372153, "env": {"SHELL": "/usr/bin/zsh", "TERM": "xterm-256color"}}
+[0.018933, "o", "\r\n$ uv run skillsible validate -f /tmp/tmp.u92k1ls4yq/skills.yml\r\n"]
+[0.068153, "o", "Valid manifest: /tmp/tmp.u92k1ls4yq/skills.yml\r\n- agents: codex, claude-code\r\n- skills: 1\r\n- tools: 1\r\n- mcps: 0\r\n"]
+[0.075521, "o", "\r\n$ uv run skillsible lock -f /tmp/tmp.u92k1ls4yq/skills.yml -o /tmp/tmp.u92k1ls4yq/skillsible.lock\r\n"]
+[0.123807, "o", "Wrote lockfile: /tmp/tmp.u92k1ls4yq/skillsible.lock\r\n- skills: 1\r\n- tools: 1\r\n- mcps: 0\r\n"]
+[0.133967, "o", "\r\n$ uv run skillsible diff -f /tmp/tmp.u92k1ls4yq/skills.yml -l /tmp/tmp.u92k1ls4yq/skillsible.lock\r\n"]
+[0.183036, "o", "No drift: /tmp/tmp.u92k1ls4yq/skills.yml matches /tmp/tmp.u92k1ls4yq/skillsible.lock\r\n"]
+[0.192615, "o", "\r\n$ uv run skillsible plan -f /tmp/tmp.u92k1ls4yq/skills.yml -l /tmp/tmp.u92k1ls4yq/skillsible.lock\r\n"]
+[0.240425, "o", "Plan for /tmp/tmp.u92k1ls4yq/skills.yml\r\n- install writing-clearly-and-concisely for codex from /tmp/tmp.u92k1ls4yq/demo-skill-repo @ 85d5609b92a046bee1b1bd7871180df00e8c21c6 [global]\r\n- install writing-clearly-and-concisely for claude-code from /tmp/tmp.u92k1ls4yq/demo-skill-repo @ 85d5609b92a046bee1b1bd7871180df00e8c21c6 [global]\r\n- tool gh for codex [cli] (binary=gh)\r\n- tool gh for claude-code [cli] (binary=gh)\r\n"]
+[0.247593, "o", "\r\n$ uv run skillsible apply --dry-run -f /tmp/tmp.u92k1ls4yq/skills.yml -l /tmp/tmp.u92k1ls4yq/skillsible.lock\r\n"]
+[0.296068, "o", "$ npx skills add /tmp/tmp.u92k1ls4yq/demo-skill-repo @ 85d5609b92a046bee1b1bd7871180df00e8c21c6 --skill writing-clearly-and-concisely --agent codex -y -g\r\n$ npx skills add /tmp/tmp.u92k1ls4yq/demo-skill-repo @ 85d5609b92a046bee1b1bd7871180df00e8c21c6 --skill writing-clearly-and-concisely --agent claude-code -y -g\r\n$ command -v gh\r\n$ command -v gh\r\n"]
