@@ -396,7 +396,7 @@ This path builds the wheel inside Docker, installs `skillsible` as a real tool, 
 
 ## Demo
 
-A scripted terminal recording lives at [skillsible-demo.cast](/home/srikalyan.swayampakula/workspaceGithub/skillsible/docs/skillsible-demo.cast).
+A scripted terminal recording lives at [`docs/skillsible-demo.cast`](docs/skillsible-demo.cast).
 
 Regenerate it with:
 
