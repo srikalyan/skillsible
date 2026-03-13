@@ -80,9 +80,10 @@ class SkillsShAdapter:
             operation.skill,
             "--agent",
             operation.agent,
+            "-y",
         ]
-        if operation.scope:
-            command.extend(["--scope", operation.scope])
+        if operation.scope == "global":
+            command.append("-g")
         return command
 
     def apply(self, operation: InstallOperation, dry_run: bool = False) -> CommandResult:

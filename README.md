@@ -337,4 +337,22 @@ docker build -t skillsible-integration -f tests/integration/docker/Dockerfile .
 docker run --rm skillsible-integration
 ```
 
+There is also a slower real-agent integration path that installs released Codex and Claude CLIs
+inside Docker and checks their non-interactive discovery surfaces without auth:
+
+```bash
+docker build -t skillsible-real-agents -f tests/integration/docker/Dockerfile.real-agents .
+docker run --rm skillsible-real-agents
+```
+
+This second path validates:
+
+- pinned released CLIs for Codex, Claude, and `skills`
+- `skillsible inspect` against real agent binaries
+- global skill discovery for `codex` and `claude-code` after `skillsible apply`
+
+It does not validate authenticated Claude features or interactive agent behavior. It is meant to
+prove that released CLIs can be installed and that their non-auth discovery surfaces work in a
+clean container.
+
 This path builds the wheel inside Docker, installs `skillsible` as a real tool, and exercises `doctor`, `plan`, and `apply` against a fixture manifest.

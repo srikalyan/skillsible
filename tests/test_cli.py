@@ -49,6 +49,7 @@ def test_apply_dry_run_prints_command(capsys, tmp_path: Path):
 
     assert rc == 0
     assert "npx skills add obra/the-elements-of-style" in out
+    assert " -y" in out
 
 
 def test_apply_dry_run_prints_versioned_source_hint(capsys, tmp_path: Path):
@@ -72,6 +73,7 @@ def test_apply_dry_run_prints_versioned_source_hint(capsys, tmp_path: Path):
 
     assert rc == 0
     assert "npx skills add obra/the-elements-of-style @ v1.2.0" in out
+    assert " -y" in out
 
 
 def test_invalid_manifest_exits_with_error(capsys, tmp_path: Path):

@@ -1,0 +1,22 @@
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
+
+ARG CODEX_VERSION=0.114.0
+ARG CLAUDE_VERSION=2.1.74
+ARG SKILLS_VERSION=1.4.4
+
+ENV CODEX_VERSION=${CODEX_VERSION}
+ENV CLAUDE_VERSION=${CLAUDE_VERSION}
+ENV SKILLS_VERSION=${SKILLS_VERSION}
+ENV HOME=/root/skillsible-home
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends nodejs npm ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p "${HOME}"
+
+WORKDIR /workspace
+
+COPY . /workspace
+
+CMD ["sh", "/workspace/tests/integration/docker/run-real-agents.sh"]

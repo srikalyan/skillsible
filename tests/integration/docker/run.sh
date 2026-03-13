@@ -28,10 +28,10 @@ printf '%s\n' "$plan_output" | grep -F -- "mcp github for codex (transport=stdio
 
 apply_output="$(skillsible apply -f /workspace/tests/integration/docker/integration.yml)"
 printf '%s\n' "$apply_output"
-printf '%s\n' "$apply_output" | grep -F -- '$ npx skills add /workspace/tests/integration/fixtures/demo-skills --skill writing-clearly-and-concisely --agent codex --scope global'
+printf '%s\n' "$apply_output" | grep -F -- '$ npx skills add /workspace/tests/integration/fixtures/demo-skills --skill writing-clearly-and-concisely --agent codex -y -g'
 printf '%s\n' "$apply_output" | grep -F -- '$ npm install -g pyright'
 printf '%s\n' "$apply_output" | grep -F -- '$ command -v gh'
 printf '%s\n' "$apply_output" | grep -F -- '# not yet applied: mcp github for codex (transport=stdio, command=github-mcp)'
 
-grep -F -- 'npx skills add /workspace/tests/integration/fixtures/demo-skills --skill writing-clearly-and-concisely --agent codex --scope global' /tmp/skillsible-tool-calls.log
+grep -F -- 'npx skills add /workspace/tests/integration/fixtures/demo-skills --skill writing-clearly-and-concisely --agent codex -y -g' /tmp/skillsible-tool-calls.log
 grep -F -- 'npm install -g pyright' /tmp/skillsible-tool-calls.log

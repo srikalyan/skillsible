@@ -93,3 +93,16 @@ jobs:
 
       - name: Run Docker integration test
         run: docker run --rm skillsible-integration
+
+  docker-real-agents:
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build real-agent Docker integration image
+        run: docker build -t skillsible-real-agents -f tests/integration/docker/Dockerfile.real-agents .
+
+      - name: Run real-agent Docker integration test
+        run: docker run --rm skillsible-real-agents
