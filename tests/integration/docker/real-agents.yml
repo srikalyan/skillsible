@@ -1,0 +1,12 @@
+version: 1
+
+agents:
+  - codex
+  - claude-code
+
+defaults:
+  scope: global
+
+skills:
+  - source: /workspace/tests/integration/fixtures/demo-skills
+    skill: writing-clearly-and-concisely
