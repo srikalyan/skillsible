@@ -9,7 +9,7 @@ This matrix describes what `skillsible` supports today, grouped by manifest laye
 | `skills` | Yes | Yes | Yes | Installed through `skills.sh`; per-skill `version` is resolved by `skillsible` before install. |
 | `tools` | Yes | Yes | Partial | `apply` supports `install.uv_tool`, `install.npm`, and `binary` checks. `inspect` does not yet provide a dedicated aggregated tool inventory. |
 | `mcps` | Yes | No | Partial | `inspect` can query existing Codex and Claude MCP state, but `skillsible apply` does not configure MCPs yet. |
-| `lockfile` | N/A | No | N/A | `skillsible lock` writes `skillsible.lock` with resolved skill revisions and normalized snapshots, but `apply` does not consume it yet. |
+| `lockfile` | N/A | Partial | N/A | `skillsible lock` writes `skillsible.lock`; `plan`, `apply`, and `validate` can consume locked skill revisions via `-l/--lockfile`. |
 
 ## Agents
 
@@ -32,6 +32,7 @@ This matrix describes what `skillsible` supports today, grouped by manifest laye
 | --- | --- | --- |
 | `skillsible validate` | Yes | Yes |
 | `skillsible lock` | Yes | Yes |
+| `skillsible diff` | Yes | Yes |
 | `skillsible plan` | Yes | Yes |
 | `skillsible inspect` | Yes | Yes |
 | `skillsible doctor` | Yes | No |
@@ -39,6 +40,6 @@ This matrix describes what `skillsible` supports today, grouped by manifest laye
 ## Current Gaps
 
 - `mcps` are declarative only; no `apply` support yet.
-- `skillsible.lock` is generated but not consumed yet.
+- Lockfile consumption currently applies only to skill revisions/source resolution.
 - `tools` do not yet have a unified post-install inventory command.
 - `doctor` does not yet expose JSON output.

@@ -330,6 +330,175 @@ def test_lock_json_prints_payload(capsys, tmp_path: Path):
     assert payload["skills"][0]["resolved_version"]
 
 
+def test_plan_with_lockfile_uses_locked_revision(capsys, tmp_path: Path):
+    repo_path = tmp_path / "skill-repo"
+    repo_path.mkdir()
+    subprocess_run(["git", "init", "-b", "main", str(repo_path)])
+    subprocess_run(["git", "-C", str(repo_path), "config", "user.name", "Test User"])
+    subprocess_run(["git", "-C", str(repo_path), "config", "user.email", "test@example.com"])
+    (repo_path / "SKILL.md").write_text("demo\n")
+    subprocess_run(["git", "-C", str(repo_path), "add", "SKILL.md"])
+    subprocess_run(["git", "-C", str(repo_path), "commit", "-m", "initial"])
+    resolved = subprocess_output(["git", "-C", str(repo_path), "rev-parse", "HEAD"]).strip()
+
+    manifest_path = tmp_path / "skills.yml"
+    lock_path = tmp_path / "skillsible.lock"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "skills:",
+                f"  - source: {repo_path}",
+                "    skill: writing-clearly-and-concisely",
+            ]
+        )
+    )
+
+    main(["lock", "-f", str(manifest_path), "-o", str(lock_path)])
+    rc = main(["plan", "-f", str(manifest_path), "-l", str(lock_path)])
+    out = capsys.readouterr().out
+
+    assert rc == 0
+    assert resolved in out
+
+
+def test_diff_reports_no_drift_for_matching_lockfile(capsys, tmp_path: Path):
+    repo_path = tmp_path / "skill-repo"
+    repo_path.mkdir()
+    subprocess_run(["git", "init", "-b", "main", str(repo_path)])
+    subprocess_run(["git", "-C", str(repo_path), "config", "user.name", "Test User"])
+    subprocess_run(["git", "-C", str(repo_path), "config", "user.email", "test@example.com"])
+    (repo_path / "SKILL.md").write_text("demo\n")
+    subprocess_run(["git", "-C", str(repo_path), "add", "SKILL.md"])
+    subprocess_run(["git", "-C", str(repo_path), "commit", "-m", "initial"])
+
+    manifest_path = tmp_path / "skills.yml"
+    lock_path = tmp_path / "skillsible.lock"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "skills:",
+                f"  - source: {repo_path}",
+                "    skill: writing-clearly-and-concisely",
+            ]
+        )
+    )
+
+    main(["lock", "-f", str(manifest_path), "-o", str(lock_path)])
+    rc = main(["diff", "-f", str(manifest_path), "-l", str(lock_path)])
+    out = capsys.readouterr().out
+
+    assert rc == 0
+    assert "No drift" in out
+
+
+def test_diff_reports_drift_when_manifest_changes(capsys, tmp_path: Path):
+    repo_path = tmp_path / "skill-repo"
+    repo_path.mkdir()
+    subprocess_run(["git", "init", "-b", "main", str(repo_path)])
+    subprocess_run(["git", "-C", str(repo_path), "config", "user.name", "Test User"])
+    subprocess_run(["git", "-C", str(repo_path), "config", "user.email", "test@example.com"])
+    (repo_path / "SKILL.md").write_text("demo\n")
+    subprocess_run(["git", "-C", str(repo_path), "add", "SKILL.md"])
+    subprocess_run(["git", "-C", str(repo_path), "commit", "-m", "initial"])
+
+    manifest_path = tmp_path / "skills.yml"
+    lock_path = tmp_path / "skillsible.lock"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "skills:",
+                f"  - source: {repo_path}",
+                "    skill: writing-clearly-and-concisely",
+            ]
+        )
+    )
+
+    main(["lock", "-f", str(manifest_path), "-o", str(lock_path)])
+    capsys.readouterr()
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "skills:",
+                f"  - source: {repo_path}",
+                "    skill: writing-clearly-and-concisely",
+                "tools:",
+                "  - name: gh",
+                "    kind: cli",
+                "    binary: gh",
+            ]
+        )
+    )
+
+    rc = main(["diff", "-f", str(manifest_path), "-l", str(lock_path)])
+    out = capsys.readouterr().out
+
+    assert rc == 1
+    assert "Drift detected" in out
+    assert "tools" in out
+
+
+def test_diff_json_prints_drift_payload(capsys, tmp_path: Path):
+    repo_path = tmp_path / "skill-repo"
+    repo_path.mkdir()
+    subprocess_run(["git", "init", "-b", "main", str(repo_path)])
+    subprocess_run(["git", "-C", str(repo_path), "config", "user.name", "Test User"])
+    subprocess_run(["git", "-C", str(repo_path), "config", "user.email", "test@example.com"])
+    (repo_path / "SKILL.md").write_text("demo\n")
+    subprocess_run(["git", "-C", str(repo_path), "add", "SKILL.md"])
+    subprocess_run(["git", "-C", str(repo_path), "commit", "-m", "initial"])
+
+    manifest_path = tmp_path / "skills.yml"
+    lock_path = tmp_path / "skillsible.lock"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "skills:",
+                f"  - source: {repo_path}",
+                "    skill: writing-clearly-and-concisely",
+            ]
+        )
+    )
+
+    main(["lock", "-f", str(manifest_path), "-o", str(lock_path)])
+    capsys.readouterr()
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "tools:",
+                "  - name: gh",
+                "    kind: cli",
+                "    binary: gh",
+            ]
+        )
+    )
+
+    rc = main(["diff", "--json", "-f", str(manifest_path), "-l", str(lock_path)])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+
+    assert rc == 1
+    assert payload["drift"] is True
+    assert payload["diffs"]
+
+
 def test_inspect_defaults_to_codex_and_claude(monkeypatch, capsys):
     calls: list[str] = []
 
@@ -433,3 +602,11 @@ def subprocess_run(command: list[str]) -> None:
 
     result = subprocess.run(command, check=False, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
+
+
+def subprocess_output(command: list[str]) -> str:
+    import subprocess
+
+    result = subprocess.run(command, check=False, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    return result.stdout
