@@ -19,4 +19,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
-        run: gh api --method DELETE "repos/${{ github.repository }}/git/refs/heads/${BRANCH_NAME}"
+        run: |
+          if gh api "repos/${{ github.repository }}/git/ref/heads/${BRANCH_NAME}" >/dev/null 2>&1; then
+            gh api --method DELETE "repos/${{ github.repository }}/git/refs/heads/${BRANCH_NAME}"
+          else
+            echo "Branch '${BRANCH_NAME}' is already deleted; nothing to do."
+          fi
