@@ -99,9 +99,13 @@ def test_plan_prints_tools_and_mcps(capsys, tmp_path: Path):
                 "tools:",
                 "  - name: pyright",
                 "    kind: lsp",
-                "    package: pyright",
-                "    install:",
-                "      npm: pyright",
+                "    source:",
+                "      npm:",
+                "        package: pyright",
+                "    verify:",
+                "      command: pyright",
+                "      args:",
+                "        - --version",
                 "mcps:",
                 "  - name: github",
                 "    transport: stdio",
@@ -114,7 +118,7 @@ def test_plan_prints_tools_and_mcps(capsys, tmp_path: Path):
     out = capsys.readouterr().out
 
     assert rc == 0
-    assert "tool pyright for codex [lsp] (package=pyright, npm=pyright)" in out
+    assert "tool pyright for codex [lsp] (npm=pyright, verify=pyright --version)" in out
     assert "mcp github for codex (transport=stdio, command=github-mcp)" in out
 
 
@@ -153,15 +157,22 @@ def test_apply_dry_run_prints_tool_install_commands(capsys, tmp_path: Path):
                 "tools:",
                 "  - name: ruff",
                 "    kind: cli",
-                "    install:",
-                "      uv_tool: ruff",
+                "    source:",
+                "      uv:",
+                "        package: ruff",
+                "    verify:",
+                "      command: ruff",
+                "      args:",
+                "        - --version",
                 "  - name: pyright",
                 "    kind: lsp",
-                "    install:",
-                "      npm: pyright",
-                "  - name: gh",
-                "    kind: cli",
-                "    binary: gh",
+                "    source:",
+                "      npm:",
+                "        package: pyright",
+                "    verify:",
+                "      command: pyright",
+                "      args:",
+                "        - --version",
             ]
         )
     )
@@ -171,8 +182,9 @@ def test_apply_dry_run_prints_tool_install_commands(capsys, tmp_path: Path):
 
     assert rc == 0
     assert "$ uv tool install ruff" in out
+    assert "$ ruff --version" in out
     assert "$ npm install -g pyright" in out
-    assert "$ command -v gh" in out
+    assert "$ pyright --version" in out
 
 
 def test_doctor_shows_nvm_hint_when_npx_missing(monkeypatch, capsys):
@@ -245,8 +257,13 @@ def test_validate_json_prints_details(capsys, tmp_path: Path):
                 "tools:",
                 "  - name: pyright",
                 "    kind: lsp",
-                "    install:",
-                "      npm: pyright",
+                "    source:",
+                "      npm:",
+                "        package: pyright",
+                "    verify:",
+                "      command: pyright",
+                "      args:",
+                "        - --version",
             ]
         )
     )
@@ -257,7 +274,8 @@ def test_validate_json_prints_details(capsys, tmp_path: Path):
 
     assert rc == 0
     assert payload["valid"] is True
-    assert payload["plan"]["tools"][0]["npm"] == "pyright"
+    assert payload["plan"]["tools"][0]["source_type"] == "npm"
+    assert payload["plan"]["tools"][0]["package"] == "pyright"
 
 
 def test_lock_writes_lockfile_and_prints_summary(capsys, tmp_path: Path):
@@ -434,9 +452,15 @@ def test_diff_reports_drift_when_manifest_changes(capsys, tmp_path: Path):
                 f"  - source: {repo_path}",
                 "    skill: writing-clearly-and-concisely",
                 "tools:",
-                "  - name: gh",
+                "  - name: ruff",
                 "    kind: cli",
-                "    binary: gh",
+                "    source:",
+                "      uv:",
+                "        package: ruff",
+                "    verify:",
+                "      command: ruff",
+                "      args:",
+                "        - --version",
             ]
         )
     )
@@ -483,9 +507,15 @@ def test_diff_json_prints_drift_payload(capsys, tmp_path: Path):
                 "agents:",
                 "  - codex",
                 "tools:",
-                "  - name: gh",
+                "  - name: ruff",
                 "    kind: cli",
-                "    binary: gh",
+                "    source:",
+                "      uv:",
+                "        package: ruff",
+                "    verify:",
+                "      command: ruff",
+                "      args:",
+                "        - --version",
             ]
         )
     )

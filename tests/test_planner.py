@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from skillsible.manifest import Manifest, McpSpec, SkillSpec, ToolInstallSpec, ToolSpec
+from skillsible.manifest import Manifest, McpSpec, SkillSpec, ToolSourceSpec, ToolSpec, ToolVerifySpec
 from skillsible.planner import build_plan
 
 
@@ -64,8 +64,8 @@ def test_build_plan_includes_tools_and_mcps():
                 name="pyright",
                 kind="lsp",
                 agents=["codex", "claude-code"],
-                package="pyright",
-                install=ToolInstallSpec(npm="pyright"),
+                source=ToolSourceSpec(type="npm", package="pyright"),
+                verify=ToolVerifySpec(command="pyright", args=["--version"]),
             )
         ],
         mcps=[
@@ -83,6 +83,6 @@ def test_build_plan_includes_tools_and_mcps():
     assert len(plan.tools) == 2
     assert (
         plan.tools[0].describe()
-        == "tool pyright for codex [lsp] (package=pyright, npm=pyright)"
+        == "tool pyright for codex [lsp] (npm=pyright, verify=pyright --version)"
     )
     assert plan.mcps[0].describe() == "mcp github for claude-code (transport=stdio, command=github-mcp)"

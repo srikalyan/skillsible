@@ -101,9 +101,13 @@ def test_load_manifest_accepts_tools_and_mcps(tmp_path: Path):
                 "tools:",
                 "  - name: pyright",
                 "    kind: lsp",
-                "    package: pyright",
-                "    install:",
-                "      npm: pyright",
+                "    source:",
+                "      npm:",
+                "        package: pyright",
+                "    verify:",
+                "      command: pyright",
+                "      args:",
+                "        - --version",
                 "mcps:",
                 "  - name: github",
                 "    transport: stdio",
@@ -116,7 +120,10 @@ def test_load_manifest_accepts_tools_and_mcps(tmp_path: Path):
 
     assert manifest.tools[0].name == "pyright"
     assert manifest.tools[0].kind == "lsp"
-    assert manifest.tools[0].install is not None
-    assert manifest.tools[0].install.npm == "pyright"
+    assert manifest.tools[0].source is not None
+    assert manifest.tools[0].source.type == "npm"
+    assert manifest.tools[0].source.package == "pyright"
+    assert manifest.tools[0].verify is not None
+    assert manifest.tools[0].verify.command == "pyright"
     assert manifest.mcps[0].name == "github"
     assert manifest.mcps[0].command == "github-mcp"

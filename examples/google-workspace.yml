@@ -29,10 +29,13 @@ skills:
 tools:
   - name: gws
     kind: cli
-    package: "@googleworkspace/cli"
-    binary: gws
-    install:
-      npm: "@googleworkspace/cli"
+    source:
+      npm:
+        package: "@googleworkspace/cli"
+    verify:
+      command: gws
+      args:
+        - --help
     agents:
       - codex
       - claude-code

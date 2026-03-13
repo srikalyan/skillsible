@@ -212,18 +212,17 @@ def _tool_payload(spec: ToolSpec) -> dict[str, object]:
         "kind": spec.kind,
         "agents": spec.agents,
     }
-    if spec.package is not None:
-        payload["package"] = spec.package
-    if spec.binary is not None:
-        payload["binary"] = spec.binary
-    if spec.install is not None:
-        payload["install"] = {
-            key: value
-            for key, value in {
-                "uv_tool": spec.install.uv_tool,
-                "npm": spec.install.npm,
-            }.items()
-            if value is not None
+    if spec.source is not None:
+        payload["source"] = {
+            spec.source.type: {
+                "package": spec.source.package,
+                **({"version": spec.source.version} if spec.source.version is not None else {}),
+            }
+        }
+    if spec.verify is not None:
+        payload["verify"] = {
+            "command": spec.verify.command,
+            "args": spec.verify.args,
         }
     return payload
 
