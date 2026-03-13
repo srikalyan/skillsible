@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from skillsible.adapters import DoctorResult
@@ -117,6 +118,30 @@ def test_plan_prints_tools_and_mcps(capsys, tmp_path: Path):
     assert "mcp github for codex (transport=stdio, command=github-mcp)" in out
 
 
+def test_plan_json_prints_manifest_and_plan(capsys, tmp_path: Path):
+    manifest_path = tmp_path / "skills.yml"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "skills:",
+                "  - source: obra/the-elements-of-style",
+                "    skill: writing-clearly-and-concisely",
+            ]
+        )
+    )
+
+    rc = main(["plan", "--json", "-f", str(manifest_path)])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+
+    assert rc == 0
+    assert payload["manifest"]["agents"] == ["codex"]
+    assert payload["plan"]["skills"][0]["skill"] == "writing-clearly-and-concisely"
+
+
 def test_apply_dry_run_prints_tool_install_commands(capsys, tmp_path: Path):
     manifest_path = tmp_path / "skills.yml"
     manifest_path.write_text(
@@ -186,6 +211,55 @@ def test_doctor_shows_npx_path_when_found(monkeypatch, capsys):
     assert "- npx path: /home/test/.nvm/versions/node/v24.0.2/bin/npx" in out
 
 
+def test_validate_prints_summary(capsys, tmp_path: Path):
+    manifest_path = tmp_path / "skills.yml"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "skills:",
+                "  - source: obra/the-elements-of-style",
+                "    skill: writing-clearly-and-concisely",
+            ]
+        )
+    )
+
+    rc = main(["validate", "-f", str(manifest_path)])
+    out = capsys.readouterr().out
+
+    assert rc == 0
+    assert f"Valid manifest: {manifest_path}" in out
+    assert "- skills: 1" in out
+
+
+def test_validate_json_prints_details(capsys, tmp_path: Path):
+    manifest_path = tmp_path / "skills.yml"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "tools:",
+                "  - name: pyright",
+                "    kind: lsp",
+                "    install:",
+                "      npm: pyright",
+            ]
+        )
+    )
+
+    rc = main(["validate", "--json", "-f", str(manifest_path)])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+
+    assert rc == 0
+    assert payload["valid"] is True
+    assert payload["plan"]["tools"][0]["npm"] == "pyright"
+
+
 def test_inspect_defaults_to_codex_and_claude(monkeypatch, capsys):
     calls: list[str] = []
 
@@ -245,3 +319,40 @@ def test_inspect_prints_command_output_and_failure(monkeypatch, capsys):
     assert "$ npx skills ls -a codex" in captured.out
     assert "demo-skill" in captured.out
     assert "codex is not available on PATH" in captured.out
+
+
+def test_inspect_json_prints_results(monkeypatch, capsys):
+    class _FakeResult:
+        def __init__(
+            self,
+            command: list[str],
+            returncode: int,
+            stdout: str = "",
+            stderr: str = "",
+            unavailable_reason: str | None = None,
+        ):
+            self.command = command
+            self.returncode = returncode
+            self.stdout = stdout
+            self.stderr = stderr
+            self.unavailable_reason = unavailable_reason
+
+    class _FakeInspector:
+        def inspect(self, _agent: str):
+            return [
+                _FakeResult(
+                    command=["codex", "mcp", "list"],
+                    returncode=0,
+                    stdout="No MCP servers configured yet.",
+                )
+            ]
+
+    monkeypatch.setattr("skillsible.cli.AgentInspector", _FakeInspector)
+
+    rc = main(["inspect", "--json", "--agent", "codex"])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+
+    assert rc == 0
+    assert payload["agents"]["codex"][0]["command"] == ["codex", "mcp", "list"]
+    assert payload["agents"]["codex"][0]["stdout"] == "No MCP servers configured yet."
