@@ -2,6 +2,8 @@
 
 Ansible-style skill management for Codex, Claude Code, and agent CLIs.
 
+[![skillsible demo](docs/skillsible-demo.gif)](docs/demo.md)
+
 ## What It Does
 
 `skillsible` manages agent setup declaratively across machines and agents.
@@ -186,28 +188,6 @@ Each `mcps` entry supports:
   Supported in `plan` and `apply` for `uv_tool`, `npm`, and binary verification
 - `mcps`
   Supported in `plan`; `apply` reports them as not yet applied
-
-## Example Patterns
-
-Some repos can participate in more than one layer.
-
-For example, `googleworkspace/cli` can already be used directly as a `skills` source:
-
-```yaml
-version: 1
-
-agents:
-  - codex
-  - claude-code
-
-skills:
-  - source: googleworkspace/cli
-    skill: gws-drive
-```
-
-That is the minimal setup.
-
-If you also want the CLI binary installed and an MCP endpoint tracked, use the fuller layered version shown in [google-workspace.yml](/home/srikalyan.swayampakula/workspaceGithub/skillsible/examples/google-workspace.yml).
 
 ## CLI
 
