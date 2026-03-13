@@ -26,21 +26,22 @@ class ToolOperation:
     agent: str
     name: str
     kind: str
-    package: str | None = None
-    binary: str | None = None
-    uv_tool: str | None = None
-    npm: str | None = None
+    source_type: str
+    package: str
+    version: str | None = None
+    verify_command: str | None = None
+    verify_args: list[str] | None = None
 
     def describe(self) -> str:
         details: list[str] = []
-        if self.package:
-            details.append(f"package={self.package}")
-        if self.binary:
-            details.append(f"binary={self.binary}")
-        if self.uv_tool:
-            details.append(f"uv_tool={self.uv_tool}")
-        if self.npm:
-            details.append(f"npm={self.npm}")
+        details.append(f"{self.source_type}={self.package}")
+        if self.version:
+            details.append(f"version={self.version}")
+        if self.verify_command:
+            verify = self.verify_command
+            if self.verify_args:
+                verify = f"{verify} {' '.join(self.verify_args)}"
+            details.append(f"verify={verify}")
         suffix = f" ({', '.join(details)})" if details else ""
         return f"tool {self.name} for {self.agent} [{self.kind}]{suffix}"
 
@@ -97,10 +98,11 @@ def build_plan(manifest: Manifest) -> Plan:
                     agent=agent,
                     name=spec.name,
                     kind=spec.kind,
-                    package=spec.package,
-                    binary=spec.binary,
-                    uv_tool=spec.install.uv_tool if spec.install else None,
-                    npm=spec.install.npm if spec.install else None,
+                    source_type=spec.source.type,
+                    package=spec.source.package,
+                    version=spec.source.version,
+                    verify_command=spec.verify.command if spec.verify else None,
+                    verify_args=spec.verify.args if spec.verify else None,
                 )
             )
 

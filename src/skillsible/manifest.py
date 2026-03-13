@@ -18,9 +18,16 @@ class SkillSpec:
 
 
 @dataclass(slots=True)
-class ToolInstallSpec:
-    uv_tool: str | None = None
-    npm: str | None = None
+class ToolSourceSpec:
+    type: str
+    package: str
+    version: str | None = None
+
+
+@dataclass(slots=True)
+class ToolVerifySpec:
+    command: str
+    args: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -28,9 +35,8 @@ class ToolSpec:
     name: str
     kind: str
     agents: list[str] = field(default_factory=list)
-    package: str | None = None
-    binary: str | None = None
-    install: ToolInstallSpec | None = None
+    source: ToolSourceSpec | None = None
+    verify: ToolVerifySpec | None = None
 
 
 @dataclass(slots=True)
@@ -109,9 +115,8 @@ def load_manifest(path: str | Path) -> Manifest:
                 name=str(item["name"]),
                 kind=str(item["kind"]),
                 agents=item_agents,
-                package=str(item["package"]) if item.get("package") is not None else None,
-                binary=str(item["binary"]) if item.get("binary") is not None else None,
-                install=_load_tool_install(item.get("install")),
+                source=_load_tool_source(item.get("source")),
+                verify=_load_tool_verify(item.get("verify")),
             )
         )
 
@@ -149,18 +154,49 @@ def load_manifest(path: str | Path) -> Manifest:
     )
 
 
-def _load_tool_install(raw: object) -> ToolInstallSpec | None:
+def _load_tool_source(raw: object) -> ToolSourceSpec | None:
     if raw is None:
-        return None
+        raise ManifestError("Each tool entry must define 'source'")
     if not isinstance(raw, dict):
-        raise ManifestError("Tool 'install' must be a mapping")
+        raise ManifestError("Tool 'source' must be a mapping")
 
-    uv_tool = raw.get("uv_tool")
-    npm = raw.get("npm")
-    if uv_tool is None and npm is None:
-        raise ManifestError("Tool 'install' must define at least one supported installer")
+    supported = ("uv", "npm", "go", "cargo")
+    keys = [key for key in supported if raw.get(key) is not None]
+    if len(keys) != 1:
+        raise ManifestError("Tool 'source' must define exactly one supported backend")
 
-    return ToolInstallSpec(
-        uv_tool=str(uv_tool) if uv_tool is not None else None,
-        npm=str(npm) if npm is not None else None,
+    backend = keys[0]
+    backend_raw = raw[backend]
+    if not isinstance(backend_raw, dict):
+        raise ManifestError(f"Tool source '{backend}' must be a mapping")
+
+    package = backend_raw.get("package") or backend_raw.get("crate")
+    if package is None:
+        raise ManifestError(f"Tool source '{backend}' must define 'package'")
+
+    version = backend_raw.get("version")
+    return ToolSourceSpec(
+        type=backend,
+        package=str(package),
+        version=str(version) if version is not None else None,
+    )
+
+
+def _load_tool_verify(raw: object) -> ToolVerifySpec | None:
+    if raw is None:
+        raise ManifestError("Each tool entry must define 'verify'")
+    if not isinstance(raw, dict):
+        raise ManifestError("Tool 'verify' must be a mapping")
+
+    command = raw.get("command")
+    if command is None:
+        raise ManifestError("Tool 'verify' must define 'command'")
+
+    args = raw.get("args", [])
+    if not isinstance(args, list):
+        raise ManifestError("Tool 'verify.args' must be a list")
+
+    return ToolVerifySpec(
+        command=str(command),
+        args=[str(item) for item in args],
     )

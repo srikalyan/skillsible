@@ -7,7 +7,7 @@ This matrix describes what `skillsible` supports today, grouped by manifest laye
 | Layer | `plan` | `apply` | `inspect` | Notes |
 | --- | --- | --- | --- | --- |
 | `skills` | Yes | Yes | Yes | Installed through `skills.sh`; per-skill `version` is resolved by `skillsible` before install. |
-| `tools` | Yes | Yes | Partial | `apply` supports `install.uv_tool`, `install.npm`, and `binary` checks. `inspect` does not yet provide a dedicated aggregated tool inventory. |
+| `tools` | Yes | Yes | Partial | `apply` supports `source.uv`, `source.npm`, `source.go`, and `source.cargo`, then runs explicit verification commands. `inspect` does not yet provide a dedicated aggregated tool inventory. |
 | `mcps` | Yes | No | Partial | `inspect` can query existing Codex and Claude MCP state, but `skillsible apply` does not configure MCPs yet. |
 | `lockfile` | N/A | Partial | N/A | `skillsible lock` writes `skillsible.lock`; `plan`, `apply`, and `validate` can consume locked skill revisions via `-l/--lockfile`. |
 
@@ -22,9 +22,10 @@ This matrix describes what `skillsible` supports today, grouped by manifest laye
 
 | Tool backend | `apply` | Notes |
 | --- | --- | --- |
-| `install.uv_tool` | Yes | Runs `uv tool install <package>`. |
-| `install.npm` | Yes | Runs `npm install -g <package>`. |
-| `binary` | Yes | Verifies the binary exists on `PATH`; does not install it. |
+| `source.uv` | Yes | Runs `uv tool install <package>` and then the configured verification command. |
+| `source.npm` | Yes | Runs `npm install -g <package>` and then the configured verification command. |
+| `source.go` | Yes | Runs `go install <package>@<version-or-latest>` and then the configured verification command. |
+| `source.cargo` | Yes | Runs `cargo install <package>` with optional `--version`, then the configured verification command. |
 
 ## Validation
 

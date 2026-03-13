@@ -92,10 +92,11 @@ def cmd_apply(args: argparse.Namespace) -> int:
             failures += 1
 
     for op in plan.tools:
-        result = tool_adapter.apply(op, dry_run=args.dry_run)
-        print(f"$ {' '.join(result.command)}")
-        if result.returncode != 0:
-            failures += 1
+        results = tool_adapter.apply(op, dry_run=args.dry_run)
+        for result in results:
+            print(f"$ {' '.join(result.command)}")
+            if result.returncode != 0:
+                failures += 1
 
     for op in plan.mcps:
         print(f"# not yet applied: {op.describe()}")

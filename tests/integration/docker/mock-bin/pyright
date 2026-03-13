@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+set -eu
+printf 'pyright %s\n' "$*" >> /tmp/skillsible-tool-calls.log
+exit 0

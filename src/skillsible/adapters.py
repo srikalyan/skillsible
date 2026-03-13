@@ -104,40 +104,59 @@ class ToolAdapter:
     name = "tools"
 
     def build_install_command(self, operation: ToolOperation) -> list[str]:
-        if operation.uv_tool:
-            return ["uv", "tool", "install", operation.uv_tool]
-        if operation.npm:
-            return ["npm", "install", "-g", operation.npm]
-        if operation.binary:
-            return ["command", "-v", operation.binary]
-        raise AdapterError(
-            f"Tool '{operation.name}' does not define a supported installer or binary check"
-        )
+        if operation.source_type == "uv":
+            package = operation.package
+            if operation.version:
+                package = f"{package}=={operation.version}"
+            return ["uv", "tool", "install", package]
+        if operation.source_type == "npm":
+            package = operation.package
+            if operation.version:
+                package = f"{package}@{operation.version}"
+            return ["npm", "install", "-g", package]
+        if operation.source_type == "go":
+            version = operation.version or "latest"
+            return ["go", "install", f"{operation.package}@{version}"]
+        if operation.source_type == "cargo":
+            command = ["cargo", "install", operation.package]
+            if operation.version:
+                command.extend(["--version", operation.version])
+            return command
+        raise AdapterError(f"Tool '{operation.name}' uses unsupported source '{operation.source_type}'")
 
-    def apply(self, operation: ToolOperation, dry_run: bool = False) -> CommandResult:
-        command = self.build_install_command(operation)
+    def build_verify_command(self, operation: ToolOperation) -> list[str]:
+        if not operation.verify_command:
+            raise AdapterError(f"Tool '{operation.name}' does not define a verification command")
+        return [operation.verify_command, *(operation.verify_args or [])]
+
+    def apply(self, operation: ToolOperation, dry_run: bool = False) -> list[CommandResult]:
+        install_command = self.build_install_command(operation)
+        verify_command = self.build_verify_command(operation)
         if dry_run:
-            return CommandResult(command=command, returncode=0)
+            return [
+                CommandResult(command=install_command, returncode=0),
+                CommandResult(command=verify_command, returncode=0),
+            ]
 
-        if operation.uv_tool:
-            result = subprocess.run(command, check=False)
-            return CommandResult(command=command, returncode=result.returncode)
+        install_binary = install_command[0]
+        if shutil.which(install_binary) is None:
+            raise AdapterError(
+                f"Tool '{operation.name}' requires {install_binary}, but {install_binary} is not available on PATH"
+            )
 
-        if operation.npm:
-            if shutil.which("npm") is None:
-                raise AdapterError(
-                    f"Tool '{operation.name}' requires npm, but npm is not available on PATH"
-                )
-            result = subprocess.run(command, check=False)
-            return CommandResult(command=command, returncode=result.returncode)
+        install_result = subprocess.run(install_command, check=False)
+        results = [CommandResult(command=install_command, returncode=install_result.returncode)]
+        if install_result.returncode != 0:
+            return results
 
-        if operation.binary:
-            returncode = 0 if shutil.which(operation.binary) is not None else 1
-            return CommandResult(command=command, returncode=returncode)
+        verify_binary = verify_command[0]
+        if shutil.which(verify_binary) is None:
+            results.append(CommandResult(command=verify_command, returncode=127))
+            return results
 
-        raise AdapterError(
-            f"Tool '{operation.name}' does not define a supported installer or binary check"
-        )
+        verify_result = subprocess.run(verify_command, check=False)
+        results.append(CommandResult(command=verify_command, returncode=verify_result.returncode))
+        return results
 
 
 class AgentInspector:

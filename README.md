@@ -58,21 +58,25 @@ skills:
 tools:
   - name: pyright
     kind: lsp # Required: free-form category like lsp or cli
-    package: pyright # Optional: descriptive package name
-    install:
-      npm: pyright # Optional: install via npm install -g
-    agents:
-      - codex
-      - claude-code
-
-  - name: gh
-    kind: cli
-    binary: gh # Optional: expected binary name on PATH
+    source:
+      npm:
+        package: pyright
+        version: 1.1.399
+    verify:
+      command: pyright
+      args:
+        - --version
 
   - name: ruff
     kind: cli
-    install:
-      uv_tool: ruff # Optional: install via uv tool install
+    source:
+      uv:
+        package: ruff
+        version: 0.13.0
+    verify:
+      command: ruff
+      args:
+        - --version
 
 mcps:
   - name: github
@@ -145,23 +149,25 @@ Each `tools` entry supports:
   Required. Free-form category such as `lsp` or `cli`.
 - `agents`
   Optional. Overrides top-level `agents` for this tool only.
-- `package`
-  Optional. Descriptive package name.
-- `binary`
-  Optional. Expected binary name on `PATH`.
-- `install`
-  Optional. Explicit installer backend. Supported forms today:
-  - `uv_tool: <package>`
-  - `npm: <package>`
+- `source`
+  Required. Explicit installer backend. Supported forms today:
+  - `uv.package`
+  - `npm.package`
+  - `go.package`
+  - `cargo.package`
+- `verify`
+  Required. Post-install verification command and optional arguments.
 
 Tool behavior in `apply`:
 
-- `install.uv_tool`
-  Runs `uv tool install <package>`
-- `install.npm`
-  Runs `npm install -g <package>`
-- `binary` without `install`
-  Verifies the binary is present on `PATH`
+- `source.uv`
+  Runs `uv tool install <package>` and then the verification command
+- `source.npm`
+  Runs `npm install -g <package>` and then the verification command
+- `source.go`
+  Runs `go install <package>@<version-or-latest>` and then the verification command
+- `source.cargo`
+  Runs `cargo install <package>` with optional `--version`, then the verification command
 
 ### `mcps`
 
@@ -185,7 +191,7 @@ Each `mcps` entry supports:
 - `skills`
   Fully supported in `plan` and `apply`
 - `tools`
-  Supported in `plan` and `apply` for `uv_tool`, `npm`, and binary verification
+  Supported in `plan` and `apply` for `uv`, `npm`, `go`, and `cargo` sources with explicit verification
 - `mcps`
   Supported in `plan`; `apply` reports them as not yet applied
 

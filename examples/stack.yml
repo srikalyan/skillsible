@@ -15,21 +15,23 @@ skills:
 tools:
   - name: pyright
     kind: lsp
-    package: pyright
-    install:
-      npm: pyright
-
-  - name: gh
-    kind: cli
-    binary: gh
-    agents:
-      - codex
-      - claude-code
+    source:
+      npm:
+        package: pyright
+    verify:
+      command: pyright
+      args:
+        - --version
 
   - name: ruff
     kind: cli
-    install:
-      uv_tool: ruff
+    source:
+      uv:
+        package: ruff
+    verify:
+      command: ruff
+      args:
+        - --version
 
 mcps:
   - name: github
