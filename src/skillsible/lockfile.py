@@ -236,8 +236,16 @@ def _mcp_payload(spec: McpSpec) -> dict[str, object]:
         payload["transport"] = spec.transport
     if spec.command is not None:
         payload["command"] = spec.command
+    if spec.args:
+        payload["args"] = spec.args
+    if spec.env:
+        payload["env"] = spec.env
+    if spec.headers:
+        payload["headers"] = spec.headers
     if spec.url is not None:
         payload["url"] = spec.url
+    if spec.bearer_token_env_var is not None:
+        payload["bearer_token_env_var"] = spec.bearer_token_env_var
     return payload
 
 

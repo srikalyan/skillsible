@@ -6,7 +6,7 @@ import sys
 from dataclasses import asdict
 from pathlib import Path
 
-from .adapters import AgentInspector, SkillsShAdapter, ToolAdapter
+from .adapters import AgentInspector, McpAdapter, SkillsShAdapter, ToolAdapter
 from .errors import AdapterError, ManifestError
 from .lockfile import apply_lockfile_to_manifest
 from .lockfile import build_lockfile
@@ -79,6 +79,7 @@ def cmd_apply(args: argparse.Namespace) -> int:
     plan = build_plan(manifest)
     adapter = SkillsShAdapter()
     tool_adapter = ToolAdapter()
+    mcp_adapter = McpAdapter()
 
     if plan.is_empty():
         print("No operations.")
@@ -99,7 +100,11 @@ def cmd_apply(args: argparse.Namespace) -> int:
                 failures += 1
 
     for op in plan.mcps:
-        print(f"# not yet applied: {op.describe()}")
+        results = mcp_adapter.apply(op, dry_run=args.dry_run)
+        for result in results:
+            print(f"$ {' '.join(result.command)}")
+            if result.returncode != 0:
+                failures += 1
 
     return 1 if failures else 0
 

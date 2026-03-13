@@ -112,6 +112,10 @@ def test_load_manifest_accepts_tools_and_mcps(tmp_path: Path):
                 "  - name: github",
                 "    transport: stdio",
                 "    command: github-mcp",
+                "    args:",
+                "      - --serve",
+                "    env:",
+                "      GITHUB_TOKEN: test-token",
             ]
         )
     )
@@ -127,3 +131,5 @@ def test_load_manifest_accepts_tools_and_mcps(tmp_path: Path):
     assert manifest.tools[0].verify.command == "pyright"
     assert manifest.mcps[0].name == "github"
     assert manifest.mcps[0].command == "github-mcp"
+    assert manifest.mcps[0].args == ["--serve"]
+    assert manifest.mcps[0].env == {"GITHUB_TOKEN": "test-token"}

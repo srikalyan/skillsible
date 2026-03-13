@@ -52,16 +52,27 @@ class McpOperation:
     name: str
     transport: str | None = None
     command: str | None = None
+    args: list[str] | None = None
+    env: dict[str, str] | None = None
+    headers: dict[str, str] | None = None
     url: str | None = None
+    bearer_token_env_var: str | None = None
 
     def describe(self) -> str:
         details: list[str] = []
         if self.transport:
             details.append(f"transport={self.transport}")
         if self.command:
-            details.append(f"command={self.command}")
+            command = self.command
+            if self.args:
+                command = f"{command} {' '.join(self.args)}"
+            details.append(f"command={command}")
         if self.url:
             details.append(f"url={self.url}")
+        if self.headers:
+            details.append(f"headers={','.join(sorted(self.headers))}")
+        if self.bearer_token_env_var:
+            details.append(f"bearer_token_env_var={self.bearer_token_env_var}")
         suffix = f" ({', '.join(details)})" if details else ""
         return f"mcp {self.name} for {self.agent}{suffix}"
 
@@ -115,7 +126,11 @@ def build_plan(manifest: Manifest) -> Plan:
                     name=spec.name,
                     transport=spec.transport,
                     command=spec.command,
+                    args=spec.args,
+                    env=spec.env,
+                    headers=spec.headers,
                     url=spec.url,
+                    bearer_token_env_var=spec.bearer_token_env_var,
                 )
             )
 

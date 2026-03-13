@@ -74,6 +74,7 @@ def test_build_plan_includes_tools_and_mcps():
                 agents=["claude-code"],
                 transport="stdio",
                 command="github-mcp",
+                args=["--serve"],
             )
         ],
     )
@@ -85,4 +86,7 @@ def test_build_plan_includes_tools_and_mcps():
         plan.tools[0].describe()
         == "tool pyright for codex [lsp] (npm=pyright, verify=pyright --version)"
     )
-    assert plan.mcps[0].describe() == "mcp github for claude-code (transport=stdio, command=github-mcp)"
+    assert (
+        plan.mcps[0].describe()
+        == "mcp github for claude-code (transport=stdio, command=github-mcp --serve)"
+    )
