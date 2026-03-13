@@ -303,41 +303,6 @@ uv tool install dist/skillsible-1.1.0-py3-none-any.whl
 skillsible doctor
 ```
 
-## CI And Release
-
-This repo includes GitHub Actions for:
-
-- CI on pushes to `main` and pull requests
-- building distributions with `uv build`
-- publishing to PyPI when a tag like `v1.1.0` is pushed
-
-### PyPI Trusted Publishing Setup
-
-Before publishing will work, configure `skillsible` on PyPI to trust this repository's publish workflow:
-
-- PyPI project: `skillsible`
-- GitHub owner: `srikalyan`
-- GitHub repository: `skillsible`
-- Workflow file: `.github/workflows/publish.yml`
-- Environment name: `pypi`
-
-After that, pushing a tag such as `v1.1.0` will trigger the publish workflow.
-
-## Workflow
-
-The default branch is `main` and it is protected.
-
-Expected flow:
-
-1. Create a feature branch.
-2. Open a pull request to `main`.
-3. Let CI pass.
-4. Merge to `main`.
-5. Tag the merge commit with `vX.Y.Z`.
-6. Push the tag to publish to PyPI.
-
-See [CONTRIBUTING.md](/home/srikalyan.swayampakula/workspaceGithub/skillsible/CONTRIBUTING.md) for the release workflow in more detail.
-
 ## Design Goals
 
 - declarative desired state
@@ -364,35 +329,6 @@ uv run pytest
 uv run skillsible validate -f examples/stack.yml
 uv run skillsible plan -f examples/skills.yml
 ```
-
-## Docker Integration
-
-Run the containerized integration test locally with:
-
-```bash
-docker build -t skillsible-integration -f tests/integration/docker/Dockerfile .
-docker run --rm skillsible-integration
-```
-
-There is also a slower real-agent integration path that installs released Codex and Claude CLIs
-inside Docker and checks their non-interactive discovery surfaces without auth:
-
-```bash
-docker build -t skillsible-real-agents -f tests/integration/docker/Dockerfile.real-agents .
-docker run --rm skillsible-real-agents
-```
-
-This second path validates:
-
-- pinned released CLIs for Codex, Claude, and `skills`
-- `skillsible inspect` against real agent binaries
-- global skill discovery for `codex` and `claude-code` after `skillsible apply`
-
-It does not validate authenticated Claude features or interactive agent behavior. It is meant to
-prove that released CLIs can be installed and that their non-auth discovery surfaces work in a
-clean container.
-
-This path builds the wheel inside Docker, installs `skillsible` as a real tool, and exercises `doctor`, `plan`, and `apply` against a fixture manifest.
 
 ## Demo
 
