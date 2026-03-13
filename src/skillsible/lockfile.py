@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 from dataclasses import dataclass
+from dataclasses import replace
 from pathlib import Path
 
 import yaml
@@ -30,6 +31,17 @@ class LockedSkill:
     resolved_source: str | None
 
 
+@dataclass(slots=True)
+class LockedManifest:
+    version: int
+    generated_by: dict[str, object]
+    source_manifest: str
+    manifest_version: int
+    skills: list[dict[str, object]]
+    tools: list[dict[str, object]]
+    mcps: list[dict[str, object]]
+
+
 def build_lockfile(manifest: Manifest, source_file: str, skillsible_version: str) -> dict[str, object]:
     return {
         "version": LOCKFILE_VERSION,
@@ -47,6 +59,76 @@ def build_lockfile(manifest: Manifest, source_file: str, skillsible_version: str
 
 def write_lockfile(path: str | Path, payload: dict[str, object]) -> None:
     Path(path).write_text(yaml.safe_dump(payload, sort_keys=False))
+
+
+def load_lockfile(path: str | Path) -> LockedManifest:
+    raw_path = Path(path)
+    raw = yaml.safe_load(raw_path.read_text()) or {}
+    if not isinstance(raw, dict):
+        raise AdapterError(f"Lockfile root must be a mapping: {raw_path}")
+
+    version = int(raw.get("version", 0))
+    if version != LOCKFILE_VERSION:
+        raise AdapterError(f"Unsupported lockfile version: {version}")
+
+    return LockedManifest(
+        version=version,
+        generated_by=dict(raw.get("generated_by", {})),
+        source_manifest=str(raw.get("source_manifest", "")),
+        manifest_version=int(raw.get("manifest_version", 0)),
+        skills=list(raw.get("skills", [])),
+        tools=list(raw.get("tools", [])),
+        mcps=list(raw.get("mcps", [])),
+    )
+
+
+def apply_lockfile_to_manifest(manifest: Manifest, lockfile: LockedManifest) -> Manifest:
+    locked_skills = {
+        _skill_key_from_payload(item): item
+        for item in lockfile.skills
+        if isinstance(item, dict)
+    }
+
+    skills: list[SkillSpec] = []
+    for spec in manifest.skills:
+        locked = locked_skills.get(_skill_key(spec))
+        if locked is None:
+            raise AdapterError(
+                f"Manifest skill '{spec.skill}' is missing from lockfile; regenerate the lockfile"
+            )
+
+        locked_source = str(locked.get("resolved_source") or spec.source)
+        locked_version = locked.get("resolved_version") or locked.get("requested_version") or spec.version
+        skills.append(
+            replace(
+                spec,
+                source=locked_source,
+                version=str(locked_version) if locked_version is not None else None,
+            )
+        )
+
+    return Manifest(
+        version=manifest.version,
+        agents=manifest.agents,
+        defaults=manifest.defaults,
+        skills=skills,
+        tools=manifest.tools,
+        mcps=manifest.mcps,
+    )
+
+
+def diff_lockfile(manifest: Manifest, source_file: str, lockfile: LockedManifest, skillsible_version: str) -> list[str]:
+    current = build_lockfile(manifest, source_file, skillsible_version)
+    baseline = {
+        "version": lockfile.version,
+        "generated_by": lockfile.generated_by,
+        "source_manifest": lockfile.source_manifest,
+        "manifest_version": lockfile.manifest_version,
+        "skills": lockfile.skills,
+        "tools": lockfile.tools,
+        "mcps": lockfile.mcps,
+    }
+    return _diff_values(current, baseline)
 
 
 def _locked_skill_payload(spec: SkillSpec) -> dict[str, object]:
@@ -158,3 +240,50 @@ def _mcp_payload(spec: McpSpec) -> dict[str, object]:
     if spec.url is not None:
         payload["url"] = spec.url
     return payload
+
+
+def _skill_key(spec: SkillSpec) -> tuple[object, ...]:
+    return (
+        spec.source,
+        spec.skill,
+        tuple(spec.agents),
+        spec.scope,
+        spec.version,
+    )
+
+
+def _skill_key_from_payload(item: dict[str, object]) -> tuple[object, ...]:
+    return (
+        item.get("source"),
+        item.get("skill"),
+        tuple(item.get("agents", [])),
+        item.get("scope"),
+        item.get("requested_version"),
+    )
+
+
+def _diff_values(current: object, baseline: object, prefix: str = "") -> list[str]:
+    if type(current) is not type(baseline):
+        return [f"{prefix or 'root'}: {baseline!r} -> {current!r}"]
+
+    if isinstance(current, dict):
+        diffs: list[str] = []
+        keys = sorted(set(current) | set(baseline))
+        for key in keys:
+            path = f"{prefix}.{key}" if prefix else str(key)
+            if key not in baseline:
+                diffs.append(f"{path}: <missing> -> {current[key]!r}")
+            elif key not in current:
+                diffs.append(f"{path}: {baseline[key]!r} -> <missing>")
+            else:
+                diffs.extend(_diff_values(current[key], baseline[key], path))
+        return diffs
+
+    if isinstance(current, list):
+        if current == baseline:
+            return []
+        return [f"{prefix or 'root'}: {baseline!r} -> {current!r}"]
+
+    if current != baseline:
+        return [f"{prefix or 'root'}: {baseline!r} -> {current!r}"]
+    return []

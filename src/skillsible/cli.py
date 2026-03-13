@@ -8,7 +8,10 @@ from pathlib import Path
 
 from .adapters import AgentInspector, SkillsShAdapter, ToolAdapter
 from .errors import AdapterError, ManifestError
+from .lockfile import apply_lockfile_to_manifest
 from .lockfile import build_lockfile
+from .lockfile import diff_lockfile
+from .lockfile import load_lockfile
 from .lockfile import write_lockfile
 from .manifest import load_manifest
 from .planner import build_plan
@@ -44,6 +47,8 @@ def _inspection_result_payload(result: object) -> dict[str, object]:
 
 def cmd_plan(args: argparse.Namespace) -> int:
     manifest = load_manifest(args.file)
+    if args.lockfile:
+        manifest = apply_lockfile_to_manifest(manifest, load_lockfile(args.lockfile))
     plan = build_plan(manifest)
 
     if plan.is_empty():
@@ -69,6 +74,8 @@ def cmd_plan(args: argparse.Namespace) -> int:
 
 def cmd_apply(args: argparse.Namespace) -> int:
     manifest = load_manifest(args.file)
+    if args.lockfile:
+        manifest = apply_lockfile_to_manifest(manifest, load_lockfile(args.lockfile))
     plan = build_plan(manifest)
     adapter = SkillsShAdapter()
     tool_adapter = ToolAdapter()
@@ -114,6 +121,8 @@ def cmd_doctor(_args: argparse.Namespace) -> int:
 
 def cmd_validate(args: argparse.Namespace) -> int:
     manifest = load_manifest(args.file)
+    if args.lockfile:
+        manifest = apply_lockfile_to_manifest(manifest, load_lockfile(args.lockfile))
     plan = build_plan(manifest)
 
     if args.json:
@@ -145,6 +154,23 @@ def cmd_lock(args: argparse.Namespace) -> int:
         print(f"- tools: {len(payload['tools'])}")
         print(f"- mcps: {len(payload['mcps'])}")
     return 0
+
+
+def cmd_diff(args: argparse.Namespace) -> int:
+    manifest = load_manifest(args.file)
+    lockfile = load_lockfile(args.lockfile)
+    diffs = diff_lockfile(manifest, args.file, lockfile, __version__)
+
+    if args.json:
+        _dump_json({"drift": bool(diffs), "diffs": diffs})
+    elif diffs:
+        print(f"Drift detected between {Path(args.file)} and {Path(args.lockfile)}")
+        for item in diffs:
+            print(f"- {item}")
+    else:
+        print(f"No drift: {Path(args.file)} matches {Path(args.lockfile)}")
+
+    return 1 if diffs else 0
 
 
 def cmd_inspect(args: argparse.Namespace) -> int:
@@ -190,11 +216,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     plan_parser = subparsers.add_parser("plan", help="Show planned operations")
     plan_parser.add_argument("-f", "--file", default="skills.yml")
+    plan_parser.add_argument("-l", "--lockfile", help="Apply a lockfile before planning")
     plan_parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
     plan_parser.set_defaults(func=cmd_plan)
 
     apply_parser = subparsers.add_parser("apply", help="Apply manifest operations")
     apply_parser.add_argument("-f", "--file", default="skills.yml")
+    apply_parser.add_argument("-l", "--lockfile", help="Apply a lockfile before applying")
     apply_parser.add_argument("--dry-run", action="store_true")
     apply_parser.set_defaults(func=cmd_apply)
 
@@ -203,6 +231,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate_parser = subparsers.add_parser("validate", help="Validate a manifest")
     validate_parser.add_argument("-f", "--file", default="skills.yml")
+    validate_parser.add_argument("-l", "--lockfile", help="Validate against a lockfile")
     validate_parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
     validate_parser.set_defaults(func=cmd_validate)
 
@@ -216,6 +245,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     lock_parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
     lock_parser.set_defaults(func=cmd_lock)
+
+    diff_parser = subparsers.add_parser("diff", help="Compare a manifest against a lockfile")
+    diff_parser.add_argument("-f", "--file", default="skills.yml")
+    diff_parser.add_argument(
+        "-l",
+        "--lockfile",
+        default="skillsible.lock",
+        help="Lockfile path to compare against",
+    )
+    diff_parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
+    diff_parser.set_defaults(func=cmd_diff)
 
     inspect_parser = subparsers.add_parser(
         "inspect",
