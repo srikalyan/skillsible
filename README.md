@@ -393,3 +393,22 @@ prove that released CLIs can be installed and that their non-auth discovery surf
 clean container.
 
 This path builds the wheel inside Docker, installs `skillsible` as a real tool, and exercises `doctor`, `plan`, and `apply` against a fixture manifest.
+
+## Demo
+
+A scripted terminal recording lives at [skillsible-demo.cast](/home/srikalyan.swayampakula/workspaceGithub/skillsible/docs/skillsible-demo.cast).
+
+Regenerate it with:
+
+```bash
+chmod +x scripts/demo_session.sh
+TERM=xterm-256color uvx --from asciinema asciinema rec -q -c "./scripts/demo_session.sh" docs/skillsible-demo.cast
+```
+
+The demo is safe to rerun locally because it uses a temporary local git repo and only performs:
+
+- `validate`
+- `lock`
+- `diff`
+- `plan`
+- `apply --dry-run`
