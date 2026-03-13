@@ -35,7 +35,7 @@ class CloneTarget:
 def resolve_display_source(operation: InstallOperation) -> str:
     if not operation.version:
         return operation.source
-    target = _classify_source(operation.source)
+    target = classify_source(operation.source)
     if target is None:
         return operation.source
     suffix = f" @ {operation.version}"
@@ -53,7 +53,7 @@ def resolve_install_source(operation: InstallOperation):
         )
         return
 
-    clone_target = _classify_source(operation.source)
+    clone_target = classify_source(operation.source)
     if clone_target is None:
         raise AdapterError(
             f"Unsupported versioned source '{operation.source}'. "
@@ -109,7 +109,7 @@ def _format_git_error(action: str, source: str, version: str, stderr: str) -> st
     return f"Failed to {action} {source} at {version}: {detail}"
 
 
-def _classify_source(source: str) -> CloneTarget | None:
+def classify_source(source: str) -> CloneTarget | None:
     local_path = Path(source).expanduser()
     if local_path.exists():
         return CloneTarget(clone_source=str(local_path.resolve()))
@@ -143,4 +143,11 @@ def _classify_source(source: str) -> CloneTarget | None:
     if source.startswith("git@"):
         return CloneTarget(clone_source=source)
 
+    return None
+
+
+def source_ref_hint(source: str) -> str | None:
+    github_tree = GITHUB_TREE_RE.match(source)
+    if github_tree:
+        return github_tree.group("ref")
     return None
