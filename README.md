@@ -2,6 +2,8 @@
 
 Ansible-style skill management for Codex, Claude Code, and agent CLIs.
 
+[![skillsible demo](docs/skillsible-demo.gif)](docs/demo.md)
+
 ## What It Does
 
 `skillsible` manages agent setup declaratively across machines and agents.

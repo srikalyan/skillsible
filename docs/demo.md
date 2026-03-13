@@ -1,9 +1,8 @@
 # Demo
 
-`docs/skillsible-demo.cast` is an asciinema recording, so GitHub shows it as raw JSON instead of
-playing it inline.
+[![skillsible demo](./skillsible-demo.gif)](./skillsible-demo.gif)
 
-Use one of these paths instead:
+`docs/skillsible-demo.cast` is the source recording used to generate the GIF above.
 
 ## Play locally
 
