@@ -188,11 +188,6 @@ class McpAdapter:
         raise AdapterError(f"Unsupported MCP target '{operation.agent}'")
 
     def _build_codex_add(self, operation) -> list[str]:
-        if operation.headers:
-            raise AdapterError(
-                f"MCP '{operation.name}' uses headers, which Codex does not support via `codex mcp add`"
-            )
-
         command = ["codex", "mcp", "add", operation.name]
         if operation.url:
             command.extend(["--url", operation.url])

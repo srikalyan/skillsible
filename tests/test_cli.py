@@ -235,6 +235,32 @@ def test_apply_dry_run_prints_mcp_commands_for_codex_and_claude(capsys, tmp_path
     assert "$ claude mcp add --transport http --header X-Test: yes claude-http https://example.com/mcp" in out
 
 
+def test_apply_dry_run_ignores_headers_for_codex(capsys, tmp_path: Path):
+    manifest_path = tmp_path / "skills.yml"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "mcps:",
+                "  - name: codex-http",
+                "    transport: http",
+                "    url: https://example.com/mcp",
+                "    headers:",
+                "      X-Test: 'yes'",
+            ]
+        )
+    )
+
+    rc = main(["apply", "--dry-run", "-f", str(manifest_path)])
+    out = capsys.readouterr().out
+
+    assert rc == 0
+    assert "$ codex mcp add codex-http --url https://example.com/mcp" in out
+    assert "--header" not in out
+
+
 def test_doctor_shows_nvm_hint_when_npx_missing(monkeypatch, capsys):
     def _fake_doctor(self):
         return DoctorResult(
