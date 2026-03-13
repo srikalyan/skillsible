@@ -212,10 +212,19 @@ If you also want the CLI binary installed and an MCP endpoint tracked, use the f
 ## CLI
 
 ```bash
+uv run skillsible validate -f skills.yml
 uv run skillsible plan -f skills.yml
 uv run skillsible apply -f skills.yml
 uv run skillsible doctor
 uv run skillsible inspect
+```
+
+Machine-readable output is available for validation and inspection workflows:
+
+```bash
+uv run skillsible validate --json -f skills.yml
+uv run skillsible plan --json -f skills.yml
+uv run skillsible inspect --json
 ```
 
 `inspect` is the current post-install verification command for supported agents. It queries real
@@ -234,6 +243,8 @@ currently see after installation. It still has a support boundary:
   Verified separately through their installed binaries
 - `mcps`
   Only inspectable once a future `apply` implementation configures them
+
+See [SUPPORT_MATRIX.md](/home/srikalyan.swayampakula/workspaceGithub/skillsible/SUPPORT_MATRIX.md) for the explicit feature-by-feature support table.
 
 ## Install
 
@@ -311,7 +322,6 @@ See [CONTRIBUTING.md](/home/srikalyan.swayampakula/workspaceGithub/skillsible/CO
 
 ## Near-Term Roadmap
 
-- manifest validation
 - agent adapters
 - drift detection
 - lockfile support
@@ -325,6 +335,7 @@ See [CONTRIBUTING.md](/home/srikalyan.swayampakula/workspaceGithub/skillsible/CO
 ```bash
 uv sync --dev
 uv run pytest
+uv run skillsible validate -f examples/stack.yml
 uv run skillsible plan -f examples/skills.yml
 ```
 

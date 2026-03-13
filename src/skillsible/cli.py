@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
+from dataclasses import asdict
 from pathlib import Path
 
 from .adapters import AgentInspector, SkillsShAdapter, ToolAdapter
@@ -10,12 +12,46 @@ from .manifest import load_manifest
 from .planner import build_plan
 
 
+def _dump_json(payload: object) -> None:
+    print(json.dumps(payload, indent=2, sort_keys=True))
+
+
+def _manifest_payload(file: str, manifest, plan) -> dict[str, object]:
+    return {
+        "file": str(Path(file)),
+        "manifest": asdict(manifest),
+        "plan": {
+            "skills": [asdict(op) for op in plan.skills],
+            "tools": [asdict(op) for op in plan.tools],
+            "mcps": [asdict(op) for op in plan.mcps],
+        },
+    }
+
+
+def _inspection_result_payload(result: object) -> dict[str, object]:
+    return {
+        "title": getattr(result, "title", ""),
+        "command": getattr(result, "command"),
+        "returncode": getattr(result, "returncode"),
+        "stdout": getattr(result, "stdout", ""),
+        "stderr": getattr(result, "stderr", ""),
+        "unavailable_reason": getattr(result, "unavailable_reason", None),
+    }
+
+
 def cmd_plan(args: argparse.Namespace) -> int:
     manifest = load_manifest(args.file)
     plan = build_plan(manifest)
 
     if plan.is_empty():
-        print("No operations.")
+        if args.json:
+            _dump_json(_manifest_payload(args.file, manifest, plan))
+        else:
+            print("No operations.")
+        return 0
+
+    if args.json:
+        _dump_json(_manifest_payload(args.file, manifest, plan))
         return 0
 
     print(f"Plan for {Path(args.file)}")
@@ -73,14 +109,42 @@ def cmd_doctor(_args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_validate(args: argparse.Namespace) -> int:
+    manifest = load_manifest(args.file)
+    plan = build_plan(manifest)
+
+    if args.json:
+        _dump_json(
+            {
+                "valid": True,
+                **_manifest_payload(args.file, manifest, plan),
+            }
+        )
+    else:
+        print(f"Valid manifest: {Path(args.file)}")
+        print(f"- agents: {', '.join(manifest.agents)}")
+        print(f"- skills: {len(manifest.skills)}")
+        print(f"- tools: {len(manifest.tools)}")
+        print(f"- mcps: {len(manifest.mcps)}")
+    return 0
+
+
 def cmd_inspect(args: argparse.Namespace) -> int:
     inspector = AgentInspector()
     failures = 0
+    payload: dict[str, object] = {"agents": {}}
 
-    print("Inspect")
     for agent in args.agent:
+        results = inspector.inspect(agent)
+        payload["agents"][agent] = [_inspection_result_payload(result) for result in results]
+        if args.json:
+            for result in results:
+                if result.unavailable_reason or result.returncode != 0:
+                    failures += 1
+            continue
+
         print(f"[{agent}]")
-        for result in inspector.inspect(agent):
+        for result in results:
             print(f"$ {' '.join(result.command)}")
             if result.unavailable_reason:
                 failures += 1
@@ -93,6 +157,9 @@ def cmd_inspect(args: argparse.Namespace) -> int:
             if result.returncode != 0:
                 failures += 1
                 print(f"! command exited with status {result.returncode}")
+
+    if args.json:
+        _dump_json(payload)
     return 1 if failures else 0
 
 
@@ -105,6 +172,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     plan_parser = subparsers.add_parser("plan", help="Show planned operations")
     plan_parser.add_argument("-f", "--file", default="skills.yml")
+    plan_parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
     plan_parser.set_defaults(func=cmd_plan)
 
     apply_parser = subparsers.add_parser("apply", help="Apply manifest operations")
@@ -114,6 +182,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     doctor_parser = subparsers.add_parser("doctor", help="Check prerequisites")
     doctor_parser.set_defaults(func=cmd_doctor)
+
+    validate_parser = subparsers.add_parser("validate", help="Validate a manifest")
+    validate_parser.add_argument("-f", "--file", default="skills.yml")
+    validate_parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
+    validate_parser.set_defaults(func=cmd_validate)
 
     inspect_parser = subparsers.add_parser(
         "inspect",
@@ -125,6 +198,7 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["codex", "claude-code"],
         help="Agent to inspect (default: inspect both codex and claude-code)",
     )
+    inspect_parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
     inspect_parser.set_defaults(func=cmd_inspect)
 
     return parser
