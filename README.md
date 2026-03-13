@@ -332,20 +332,4 @@ uv run skillsible plan -f examples/skills.yml
 
 ## Demo
 
-The demo entrypoint is [`docs/demo.md`](docs/demo.md). It explains how to play the asciinema cast
-locally and links to the underlying recording and script.
-
-Regenerate it with:
-
-```bash
-chmod +x scripts/demo_session.sh
-TERM=xterm-256color uvx --from asciinema asciinema rec -q -c "./scripts/demo_session.sh" docs/skillsible-demo.cast
-```
-
-The demo is safe to rerun locally because it uses a temporary local git repo and only performs:
-
-- `validate`
-- `lock`
-- `diff`
-- `plan`
-- `apply --dry-run`
+See [`docs/demo.md`](docs/demo.md).
