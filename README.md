@@ -396,7 +396,8 @@ This path builds the wheel inside Docker, installs `skillsible` as a real tool, 
 
 ## Demo
 
-A scripted terminal recording lives at [`docs/skillsible-demo.cast`](docs/skillsible-demo.cast).
+The demo entrypoint is [`docs/demo.md`](docs/demo.md). It explains how to play the asciinema cast
+locally and links to the underlying recording and script.
 
 Regenerate it with:
 
