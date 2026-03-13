@@ -191,7 +191,7 @@ Each `mcps` entry supports:
 - `env`
   Optional. Environment variables for stdio MCPs.
 - `headers`
-  Optional. HTTP headers for Claude Code MCP configuration.
+  Optional. HTTP headers for MCP configuration. Applied for Claude Code and ignored for Codex, because the Codex CLI does not expose a generic header flag.
 - `url`
   Required for HTTP/SSE MCPs. URL for an already-running MCP server.
 - `bearer_token_env_var`
@@ -203,6 +203,8 @@ MCP behavior in `apply`:
   Runs `codex mcp add <name> -- <command>...` or `claude mcp add --transport stdio <name> -- <command>...`
 - `transport=http|sse`
   Runs the corresponding agent HTTP MCP add command using the configured URL
+- `headers`
+  Passed through to Claude Code. Retained in the manifest and lockfile for Codex, but omitted during `codex mcp add` because the CLI rejects arbitrary header flags.
 - existing MCPs with the same name
   Are removed and re-added so the config is reconciled instead of duplicated
 

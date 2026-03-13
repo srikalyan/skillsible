@@ -25,7 +25,7 @@ This matrix describes what `skillsible` supports today, grouped by manifest laye
 | `transport=stdio` | Yes | Supports `command`, `args`, and `env` for Codex and Claude Code. |
 | `transport=http` | Yes | Supports `url` for Codex and Claude Code. |
 | `transport=sse` | Yes | Passed through to Claude Code and treated as URL-based for Codex. |
-| `headers` | Claude Code only | Codex CLI does not expose arbitrary header flags. |
+| `headers` | Partial | Applied for Claude Code. Stored in manifests and lockfiles but ignored during Codex apply because the Codex CLI does not expose arbitrary header flags. |
 | `bearer_token_env_var` | Yes | Passed directly to Codex and converted into an `Authorization` header for Claude Code at apply time. |
 
 ## Tool Backends
