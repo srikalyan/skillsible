@@ -260,6 +260,76 @@ def test_validate_json_prints_details(capsys, tmp_path: Path):
     assert payload["plan"]["tools"][0]["npm"] == "pyright"
 
 
+def test_lock_writes_lockfile_and_prints_summary(capsys, tmp_path: Path):
+    repo_path = tmp_path / "skill-repo"
+    repo_path.mkdir()
+    subprocess_run(["git", "init", "-b", "main", str(repo_path)])
+    subprocess_run(["git", "-C", str(repo_path), "config", "user.name", "Test User"])
+    subprocess_run(["git", "-C", str(repo_path), "config", "user.email", "test@example.com"])
+    (repo_path / "SKILL.md").write_text("demo\n")
+    subprocess_run(["git", "-C", str(repo_path), "add", "SKILL.md"])
+    subprocess_run(["git", "-C", str(repo_path), "commit", "-m", "initial"])
+
+    manifest_path = tmp_path / "skills.yml"
+    lock_path = tmp_path / "skillsible.lock"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "skills:",
+                f"  - source: {repo_path}",
+                "    skill: writing-clearly-and-concisely",
+            ]
+        )
+    )
+
+    rc = main(["lock", "-f", str(manifest_path), "-o", str(lock_path)])
+    out = capsys.readouterr().out
+    contents = lock_path.read_text()
+
+    assert rc == 0
+    assert f"Wrote lockfile: {lock_path}" in out
+    assert "resolved_version:" in contents
+    assert "generated_by:" in contents
+
+
+def test_lock_json_prints_payload(capsys, tmp_path: Path):
+    repo_path = tmp_path / "skill-repo"
+    repo_path.mkdir()
+    subprocess_run(["git", "init", "-b", "main", str(repo_path)])
+    subprocess_run(["git", "-C", str(repo_path), "config", "user.name", "Test User"])
+    subprocess_run(["git", "-C", str(repo_path), "config", "user.email", "test@example.com"])
+    (repo_path / "SKILL.md").write_text("demo\n")
+    subprocess_run(["git", "-C", str(repo_path), "add", "SKILL.md"])
+    subprocess_run(["git", "-C", str(repo_path), "commit", "-m", "initial"])
+
+    manifest_path = tmp_path / "skills.yml"
+    lock_path = tmp_path / "skillsible.lock"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "skills:",
+                f"  - source: {repo_path}",
+                "    skill: writing-clearly-and-concisely",
+            ]
+        )
+    )
+
+    rc = main(["lock", "--json", "-f", str(manifest_path), "-o", str(lock_path)])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+
+    assert rc == 0
+    assert payload["version"] == 1
+    assert payload["skills"][0]["skill"] == "writing-clearly-and-concisely"
+    assert payload["skills"][0]["resolved_version"]
+
+
 def test_inspect_defaults_to_codex_and_claude(monkeypatch, capsys):
     calls: list[str] = []
 
@@ -356,3 +426,10 @@ def test_inspect_json_prints_results(monkeypatch, capsys):
     assert rc == 0
     assert payload["agents"]["codex"][0]["command"] == ["codex", "mcp", "list"]
     assert payload["agents"]["codex"][0]["stdout"] == "No MCP servers configured yet."
+
+
+def subprocess_run(command: list[str]) -> None:
+    import subprocess
+
+    result = subprocess.run(command, check=False, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr

@@ -8,8 +8,11 @@ from pathlib import Path
 
 from .adapters import AgentInspector, SkillsShAdapter, ToolAdapter
 from .errors import AdapterError, ManifestError
+from .lockfile import build_lockfile
+from .lockfile import write_lockfile
 from .manifest import load_manifest
 from .planner import build_plan
+from . import __version__
 
 
 def _dump_json(payload: object) -> None:
@@ -129,6 +132,21 @@ def cmd_validate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_lock(args: argparse.Namespace) -> int:
+    manifest = load_manifest(args.file)
+    payload = build_lockfile(manifest, args.file, __version__)
+    write_lockfile(args.output, payload)
+
+    if args.json:
+        _dump_json(payload)
+    else:
+        print(f"Wrote lockfile: {Path(args.output)}")
+        print(f"- skills: {len(payload['skills'])}")
+        print(f"- tools: {len(payload['tools'])}")
+        print(f"- mcps: {len(payload['mcps'])}")
+    return 0
+
+
 def cmd_inspect(args: argparse.Namespace) -> int:
     inspector = AgentInspector()
     failures = 0
@@ -187,6 +205,17 @@ def build_parser() -> argparse.ArgumentParser:
     validate_parser.add_argument("-f", "--file", default="skills.yml")
     validate_parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
     validate_parser.set_defaults(func=cmd_validate)
+
+    lock_parser = subparsers.add_parser("lock", help="Generate a lockfile from a manifest")
+    lock_parser.add_argument("-f", "--file", default="skills.yml")
+    lock_parser.add_argument(
+        "-o",
+        "--output",
+        default="skillsible.lock",
+        help="Lockfile output path (default: skillsible.lock)",
+    )
+    lock_parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
+    lock_parser.set_defaults(func=cmd_lock)
 
     inspect_parser = subparsers.add_parser(
         "inspect",
