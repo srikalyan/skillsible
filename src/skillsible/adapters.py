@@ -159,6 +159,111 @@ class ToolAdapter:
         return results
 
 
+class McpAdapter:
+    """Adapter that configures MCP servers for supported agent CLIs."""
+
+    name = "mcps"
+
+    def apply(self, operation, dry_run: bool = False) -> list[CommandResult]:
+        command = self.build_add_command(operation)
+        if dry_run:
+            return [CommandResult(command=command, returncode=0)]
+
+        self._reconcile_existing(operation)
+
+        binary = command[0]
+        if shutil.which(binary) is None:
+            raise AdapterError(
+                f"MCP '{operation.name}' for {operation.agent} requires {binary}, but {binary} is not available on PATH"
+            )
+
+        result = subprocess.run(command, check=False)
+        return [CommandResult(command=command, returncode=result.returncode)]
+
+    def build_add_command(self, operation) -> list[str]:
+        if operation.agent == "codex":
+            return self._build_codex_add(operation)
+        if operation.agent == "claude-code":
+            return self._build_claude_add(operation)
+        raise AdapterError(f"Unsupported MCP target '{operation.agent}'")
+
+    def _build_codex_add(self, operation) -> list[str]:
+        if operation.headers:
+            raise AdapterError(
+                f"MCP '{operation.name}' uses headers, which Codex does not support via `codex mcp add`"
+            )
+
+        command = ["codex", "mcp", "add", operation.name]
+        if operation.url:
+            command.extend(["--url", operation.url])
+            if operation.bearer_token_env_var:
+                command.extend(["--bearer-token-env-var", operation.bearer_token_env_var])
+            return command
+
+        for key, value in sorted((operation.env or {}).items()):
+            command.extend(["--env", f"{key}={value}"])
+        command.append("--")
+        command.append(operation.command)
+        command.extend(operation.args or [])
+        return command
+
+    def _build_claude_add(self, operation) -> list[str]:
+        command = ["claude", "mcp", "add"]
+        if operation.transport:
+            command.extend(["--transport", operation.transport])
+        for key, value in sorted((operation.env or {}).items()):
+            command.extend(["--env", f"{key}={value}"])
+        for key, value in sorted((operation.headers or {}).items()):
+            command.extend(["--header", f"{key}: {value}"])
+        if operation.bearer_token_env_var:
+            token = os.environ.get(operation.bearer_token_env_var)
+            if token is None:
+                raise AdapterError(
+                    f"MCP '{operation.name}' requires env var {operation.bearer_token_env_var} for bearer auth"
+                )
+            command.extend(["--header", f"Authorization: Bearer {token}"])
+        command.append(operation.name)
+        if operation.url:
+            command.append(operation.url)
+        else:
+            command.append("--")
+            command.append(operation.command)
+            command.extend(operation.args or [])
+        return command
+
+    def _reconcile_existing(self, operation) -> None:
+        if operation.agent == "codex":
+            exists = subprocess.run(
+                ["codex", "mcp", "get", operation.name, "--json"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            if exists.returncode == 0:
+                remove = subprocess.run(["codex", "mcp", "remove", operation.name], check=False)
+                if remove.returncode != 0:
+                    raise AdapterError(f"Failed to remove existing Codex MCP '{operation.name}'")
+            return
+
+        if operation.agent == "claude-code":
+            listing = subprocess.run(
+                ["claude", "mcp", "list"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            if listing.returncode != 0:
+                raise AdapterError("Failed to inspect existing Claude MCP servers")
+            lines = [line.strip() for line in listing.stdout.splitlines() if line.strip()]
+            if any(line.startswith(f"{operation.name}:") for line in lines):
+                remove = subprocess.run(["claude", "mcp", "remove", operation.name], check=False)
+                if remove.returncode != 0:
+                    raise AdapterError(f"Failed to remove existing Claude MCP '{operation.name}'")
+            return
+
+        raise AdapterError(f"Unsupported MCP target '{operation.agent}'")
+
+
 class AgentInspector:
     """Inspect what supported agent CLIs currently discover."""
 

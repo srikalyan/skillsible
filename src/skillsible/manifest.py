@@ -45,7 +45,11 @@ class McpSpec:
     agents: list[str] = field(default_factory=list)
     transport: str | None = None
     command: str | None = None
+    args: list[str] = field(default_factory=list)
+    env: dict[str, str] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
     url: str | None = None
+    bearer_token_env_var: str | None = None
 
 
 @dataclass(slots=True)
@@ -135,9 +139,17 @@ def load_manifest(path: str | Path) -> Manifest:
             McpSpec(
                 name=str(item["name"]),
                 agents=item_agents,
-                transport=str(item["transport"]) if item.get("transport") is not None else None,
+                transport=_normalize_mcp_transport(item.get("transport"), item.get("command"), item.get("url")),
                 command=str(item["command"]) if item.get("command") is not None else None,
+                args=_load_string_list(item.get("args"), "MCP 'args'"),
+                env=_load_string_dict(item.get("env"), "MCP 'env'"),
+                headers=_load_string_dict(item.get("headers"), "MCP 'headers'"),
                 url=str(item["url"]) if item.get("url") is not None else None,
+                bearer_token_env_var=(
+                    str(item["bearer_token_env_var"])
+                    if item.get("bearer_token_env_var") is not None
+                    else None
+                ),
             )
         )
 
@@ -200,3 +212,40 @@ def _load_tool_verify(raw: object) -> ToolVerifySpec | None:
         command=str(command),
         args=[str(item) for item in args],
     )
+
+
+def _normalize_mcp_transport(
+    raw_transport: object,
+    raw_command: object,
+    raw_url: object,
+) -> str:
+    if raw_command is not None and raw_url is not None:
+        raise ManifestError("Each MCP entry must define either 'command' or 'url', not both")
+    if raw_command is None and raw_url is None:
+        raise ManifestError("Each MCP entry must define either 'command' or 'url'")
+
+    transport = str(raw_transport) if raw_transport is not None else ("stdio" if raw_command else "http")
+    allowed = {"stdio", "http", "sse"}
+    if transport not in allowed:
+        raise ManifestError(f"Unsupported MCP transport: {transport}")
+    if transport == "stdio" and raw_command is None:
+        raise ManifestError("Stdio MCP entries must define 'command'")
+    if transport in {"http", "sse"} and raw_url is None:
+        raise ManifestError("HTTP/SSE MCP entries must define 'url'")
+    return transport
+
+
+def _load_string_list(raw: object, label: str) -> list[str]:
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        raise ManifestError(f"{label} must be a list")
+    return [str(item) for item in raw]
+
+
+def _load_string_dict(raw: object, label: str) -> dict[str, str]:
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict):
+        raise ManifestError(f"{label} must be a mapping")
+    return {str(key): str(value) for key, value in raw.items()}

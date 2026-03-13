@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+set -eu
+
+printf 'claude %s\n' "$*" >> /tmp/skillsible-tool-calls.log
+
+if [ "$1" = "mcp" ] && [ "$2" = "list" ]; then
+  exit 0
+fi
+
+exit 0

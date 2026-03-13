@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+set -eu
+
+printf 'codex %s\n' "$*" >> /tmp/skillsible-tool-calls.log
+
+if [ "$1" = "mcp" ] && [ "$2" = "get" ]; then
+  exit 1
+fi
+
+if [ "$1" = "mcp" ] && [ "$2" = "list" ]; then
+  printf 'No MCP servers configured yet.\n'
+  exit 0
+fi
+
+exit 0

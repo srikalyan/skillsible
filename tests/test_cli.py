@@ -110,6 +110,8 @@ def test_plan_prints_tools_and_mcps(capsys, tmp_path: Path):
                 "  - name: github",
                 "    transport: stdio",
                 "    command: github-mcp",
+                "    args:",
+                "      - --serve",
             ]
         )
     )
@@ -119,7 +121,7 @@ def test_plan_prints_tools_and_mcps(capsys, tmp_path: Path):
 
     assert rc == 0
     assert "tool pyright for codex [lsp] (npm=pyright, verify=pyright --version)" in out
-    assert "mcp github for codex (transport=stdio, command=github-mcp)" in out
+    assert "mcp github for codex (transport=stdio, command=github-mcp --serve)" in out
 
 
 def test_plan_json_prints_manifest_and_plan(capsys, tmp_path: Path):
@@ -185,6 +187,52 @@ def test_apply_dry_run_prints_tool_install_commands(capsys, tmp_path: Path):
     assert "$ ruff --version" in out
     assert "$ npm install -g pyright" in out
     assert "$ pyright --version" in out
+
+
+def test_apply_dry_run_prints_mcp_commands_for_codex_and_claude(capsys, tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("TEST_BEARER_TOKEN", "secret-token")
+
+    manifest_path = tmp_path / "skills.yml"
+    manifest_path.write_text(
+        "\n".join(
+            [
+                "version: 1",
+                "agents:",
+                "  - codex",
+                "  - claude-code",
+                "mcps:",
+                "  - name: local-mcp",
+                "    command: mcp-server",
+                "    args:",
+                "      - --port",
+                "      - '9000'",
+                "    env:",
+                "      API_KEY: abc123",
+                "  - name: hosted-mcp",
+                "    agents:",
+                "      - codex",
+                "    transport: http",
+                "    url: https://example.com/mcp",
+                "    bearer_token_env_var: TEST_BEARER_TOKEN",
+                "  - name: claude-http",
+                "    agents:",
+                "      - claude-code",
+                "    transport: http",
+                "    url: https://example.com/mcp",
+                "    headers:",
+                "      X-Test: 'yes'",
+            ]
+        )
+    )
+
+    rc = main(["apply", "--dry-run", "-f", str(manifest_path)])
+    out = capsys.readouterr().out
+
+    assert rc == 0
+    assert "$ codex mcp add local-mcp --env API_KEY=abc123 -- mcp-server --port 9000" in out
+    assert "$ claude mcp add --transport stdio --env API_KEY=abc123 local-mcp -- mcp-server --port 9000" in out
+    assert "$ codex mcp add hosted-mcp --url https://example.com/mcp --bearer-token-env-var TEST_BEARER_TOKEN" in out
+    assert "$ claude mcp add --transport http --header X-Test: yes claude-http https://example.com/mcp" in out
 
 
 def test_doctor_shows_nvm_hint_when_npx_missing(monkeypatch, capsys):
