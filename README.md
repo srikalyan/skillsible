@@ -292,7 +292,7 @@ skillsible doctor
 For a specific version:
 
 ```bash
-uv tool install skillsible==1.1.0
+uv tool install skillsible==1.2.0
 skillsible doctor
 ```
 
@@ -307,7 +307,7 @@ From a built wheel:
 
 ```bash
 uv build
-uv tool install dist/skillsible-1.1.0-py3-none-any.whl
+uv tool install dist/skillsible-1.2.0-py3-none-any.whl
 skillsible doctor
 ```
 
